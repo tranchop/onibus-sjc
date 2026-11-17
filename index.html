@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Linhas de Ônibus SJC</title>
+<meta name="description" content="Próximos horários de ônibus em São José dos Campos, conforme os PDFs oficiais da Prefeitura.">
+<meta name="theme-color" content="#1c2a8f">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c2a8f'/%3E%3Cpath d='M16 20h32v22H16z' fill='none' stroke='white' stroke-width='4'/%3E%3Ccircle cx='24' cy='46' r='3' fill='white'/%3E%3Ccircle cx='40' cy='46' r='3' fill='white'/%3E%3Cpath d='M16 30h32' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c2a8f'/%3E%3Cpath d='M16 20h32v22H16z' fill='none' stroke='white' stroke-width='4'/%3E%3Ccircle cx='24' cy='46' r='3' fill='white'/%3E%3Ccircle cx='40' cy='46' r='3' fill='white'/%3E%3Cpath d='M16 30h32' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: cabeçalho da linha, controles, dois cartões de próximas partidas (Centro azul / Bairro vermelho, as cores dos mapas do PDF), grade por hora, itinerário recolhido. */
+:root{
+  --bg:#f2f5f8; --surface:#ffffff; --fg:#13212f; --muted:#586878; --line:#d8e0e8;
+  --centro:#1c2a8f; --centro-bg:#e7eafb; --bairro:#c4281f; --bairro-bg:#fbe8e6;
+  --uv:#1b6b44; --uv-bg:#dff3e8; --ac:#8a5a00; --ac-bg:#fbefd2;
+  --on-dir:#ffffff;
+  --font-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-num:'Barlow Condensed','Barlow',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e151c; --surface:#16202a; --fg:#e7eef5; --muted:#92a3b4; --line:#263340;
+    --centro:#98a4ff; --centro-bg:#1b2150; --bairro:#ff8f86; --bairro-bg:#442220;
+    --uv:#7fdcaa; --uv-bg:#163a2a; --ac:#f1c25c; --ac-bg:#423213;
+    --on-dir:#0e151c; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e151c; --surface:#16202a; --fg:#e7eef5; --muted:#92a3b4; --line:#263340;
+  --centro:#98a4ff; --centro-bg:#1b2150; --bairro:#ff8f86; --bairro-bg:#442220;
+  --uv:#7fdcaa; --uv-bg:#163a2a; --ac:#f1c25c; --ac-bg:#423213;
+  --on-dir:#0e151c; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 32px}
+.wrap{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--centro);outline-offset:2px}
+
+header.top{display:flex;gap:14px;align-items:center}
+.num{font-family:var(--font-num);font-weight:700;font-size:38px;line-height:1;background:var(--centro);color:var(--on-dir);
+  padding:6px 12px 4px;border-radius:8px;letter-spacing:.5px}
+.lines{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;margin-block:-8px;scroll-snap-type:x proximity}
+.lines::-webkit-scrollbar{display:none}
+.lines button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:4px 14px;cursor:pointer;font-family:var(--font-num);font-weight:700;font-size:24px;line-height:1.1;letter-spacing:.5px;flex:none;min-height:44px;scroll-snap-align:center}
+.lines button[aria-pressed="true"]{background:var(--centro);color:var(--on-dir);border-color:var(--centro)}
+.lines button.ag{font-family:var(--font-body);font-size:16px;font-weight:600;letter-spacing:0;padding:4px 16px}
+.ov{display:flex;flex-direction:column}
+.ovr{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:10px 0;margin:0;border:0;background:none;text-align:left;cursor:pointer;color:inherit}
+.ovw{display:flex;align-items:center;border-top:1px solid var(--line)}
+.ovw:first-child{border-top:0}
+.ovr{flex:1;min-width:0}
+.star{flex:none;width:44px;height:44px;background:none;border:0;cursor:pointer;font-size:24px;line-height:1;color:var(--muted)}
+.star[aria-pressed="true"]{color:var(--ac)}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ch .star{margin:-8px -8px 0 0}
+.ovbar{display:flex;flex-wrap:wrap;gap:8px}
+.ovr .n{font-family:var(--font-num);font-weight:700;font-size:24px;line-height:1;background:var(--fg);color:var(--bg);border-radius:6px;padding:5px 0 3px;text-align:center}
+.ovr .d{display:flex;flex-direction:column;min-width:0}
+.ovr .d b{font-weight:600}
+.ovr .d span{font-size:12px;color:var(--muted)}
+.ovr .tr{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.ovr .t{font-family:var(--font-num);font-weight:600;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.ovr .t.c{color:var(--centro)} .ovr .t.b{color:var(--bairro)}
+.ovr .r{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.fqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.fq{display:flex;flex-direction:column;gap:10px;min-width:0;border-top:1px solid var(--line);padding-top:10px}
+.fq h3{margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.fq.c h3{color:var(--centro)} .fq.b h3{color:var(--bairro)}
+.bars{display:flex;align-items:stretch;gap:2px;height:76px}
+.bars .b{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bars .col{flex:1;width:100%;min-height:0;display:flex;align-items:flex-end}
+.bars i{display:block;width:100%;min-height:2px;border-radius:2px 2px 0 0}
+.fq.c .bars i{background:var(--centro)} .fq.b .bars i{background:var(--bairro)}
+.bars .b span{font-size:10px;line-height:10px;height:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bands{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:baseline;font-size:14px;font-variant-numeric:tabular-nums}
+.bands .k{color:var(--muted)} .bands .v{font-weight:600} .bands .n{color:var(--muted);font-size:13px;text-align:right}
+.fq .gap{font-size:14px;background:var(--bg);border-radius:8px;padding:8px 10px;font-variant-numeric:tabular-nums}
+.top h1{margin:0;font-size:18px;font-weight:600;line-height:1.2;text-wrap:balance}
+.top p{margin:2px 0 0;color:var(--muted);font-size:13px}
+
+.controls{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button,.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;min-height:40px;cursor:pointer;font-size:14px;font-weight:500}
+#days{display:grid;grid-template-columns:repeat(4,1fr)}
+#days button{border-radius:10px;padding:6px 4px;text-align:center}
+.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.time{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.time input,.time button{min-height:40px}
+.time input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px;font-variant-numeric:tabular-nums}
+.time button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;cursor:pointer}
+.ctx{margin:0;color:var(--muted);font-size:13px}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h2{margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.card.c h2{color:var(--centro)} .card.b h2{color:var(--bairro)}
+.card .route{margin:0;color:var(--muted);font-size:13px}
+.next{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.big{font-family:var(--font-num);font-weight:600;font-size:56px;line-height:1;font-variant-numeric:tabular-nums}
+.card.c .big{color:var(--centro)} .card.b .big{color:var(--bairro)}
+.rel{font-weight:600;font-size:16px}
+.meta{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0}
+.more{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.more li{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.more li:last-child{border-bottom:0;padding-bottom:0}
+.more .t{font-family:var(--font-num);font-weight:600;font-size:22px;width:60px}
+.more .r{color:var(--muted);font-size:13px;margin-left:auto;text-align:right}
+.empty{color:var(--muted);margin:0}
+
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;border-radius:4px;padding:1px 6px;line-height:1.5;white-space:nowrap}
+.tag.tc{background:var(--centro-bg);color:var(--centro)}
+.tag.uv{background:var(--uv-bg);color:var(--uv)} .tag.ac{background:var(--ac-bg);color:var(--ac)}
+.soon{background:var(--ac-bg);color:var(--ac);border-radius:999px;padding:1px 9px;font-weight:700}
+.tagd{font-size:12px;color:var(--muted)}
+
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h2{margin:0;font-size:16px;font-weight:600}
+.panel .sub{margin:0;color:var(--muted);font-size:13px}
+.dirtabs{display:flex;gap:6px}
+.dirtabs button{flex:1;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px;cursor:pointer;font-weight:600}
+.dirtabs button[aria-pressed="true"].c{background:var(--centro);color:var(--on-dir);border-color:var(--centro)}
+.dirtabs button[aria-pressed="true"].b{background:var(--bairro);color:var(--on-dir);border-color:var(--bairro)}
+.grid{display:flex;flex-direction:column;position:relative;max-height:360px;overflow-y:auto;overscroll-behavior:contain}
+.hr{display:grid;grid-template-columns:40px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line);align-items:start}
+.hr:first-child{border-top:0}
+.hr .h{font-family:var(--font-num);font-weight:600;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums}
+.mins{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.m{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-variant-numeric:tabular-nums;font-weight:500}
+.m.past{opacity:.38} .m.off{opacity:.2}
+.m.nx{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.m.nx .tag{background:transparent;color:inherit;padding:0}
+.hr.now .h{text-decoration:underline;text-underline-offset:4px}
+
+.legend{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.legend div{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+details{font-size:14px}
+summary{cursor:pointer;font-weight:600;font-size:16px}
+details p,details ul{margin:8px 0 0}
+details ul{padding-left:18px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pills span{border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:13px}
+.foot{font-size:12px;color:var(--muted)}
+.foot a{color:inherit}
+@media (prefers-reduced-motion:no-preference){.big{transition:color .2s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="lines" id="lines" role="group" aria-label="Linha de ônibus"></div>
+  <header class="top">
+    <div class="num" id="lnum"></div>
+    <div>
+      <h1 id="lname"></h1>
+      <p id="lsub"></p>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="seg" id="days" role="group" aria-label="Dia da semana">
+      <button data-day="auto" aria-pressed="true">Hoje</button>
+      <button data-day="util" aria-pressed="false">Dias úteis</button>
+      <button data-day="sab" aria-pressed="false">Sábado</button>
+      <button data-day="dom" aria-pressed="false">Domingo</button>
+    </div>
+    <div class="seg" id="filters" role="group" aria-label="Filtro de variante"></div>
+    <div class="time">
+      <label for="t">A partir das</label>
+      <input type="time" id="t">
+      <button id="tnow" type="button">Agora</button>
+    </div>
+    <p class="ctx" id="ctx"></p>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <section class="panel" id="overview" hidden>
+    <h2>Próximo ônibus de cada linha</h2>
+    <div class="ovbar">
+      <div class="seg" id="favseg" role="group" aria-label="Quais linhas mostrar">
+        <button class="chip" data-o="fav" aria-pressed="false">★ Favoritas</button>
+        <button class="chip" data-o="all" aria-pressed="true">Todas</button>
+      </div>
+      <div class="seg" id="sortseg" role="group" aria-label="Ordenar lista">
+        <button class="chip" data-s="time" aria-pressed="true">Mais cedo primeiro</button>
+        <button class="chip" data-s="line" aria-pressed="false">Por linha</button>
+      </div>
+    </div>
+    <p class="sub">Toque na estrela para fixar uma linha e sentido. Toque na linha para abrir os detalhes. Vale o dia e o horário escolhidos acima.</p>
+    <div class="ov" id="ov"></div>
+  </section>
+
+  <section class="panel" id="gridp">
+    <h2>Grade completa</h2>
+    <div class="dirtabs" id="dirtabs"></div>
+    <p class="sub" id="gsub"></p>
+    <div class="grid" id="grid"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="panel" id="freq">
+    <h2>Frequência</h2>
+    <p class="sub" id="fqsub"></p>
+    <div class="fqs" id="fqs"></div>
+  </section>
+
+  <section class="panel" id="itinp">
+    <details>
+      <summary>Itinerário e variantes</summary>
+      <div id="itin"></div>
+    </details>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+const LINES={
+'128':{
+  num:'128',name:'Urbanova – Colinas / Terminal Central',sub:'Circular no Urbanova · OSO 40 · tabela de 13/04/2026',
+  dirs:[{k:'C',name:'Sentido Centro',route:'Urbanova → Terminal Central',cls:'c'},{k:'B',name:'Sentido Bairro',route:'Terminal Central → Urbanova',cls:'b'}],
+  tags:{
+    C:{'UV':{c:'uv',d:'Portaria da Univap'},'VG,AC':{c:'ac',d:'Av. Victor Garrido e Av. Anchieta'},'VG,UV':{c:'uv',d:'Av. Victor Garrido e Univap'}},
+    B:{'UV':{c:'uv',d:'Portaria da Univap'},'AC':{c:'ac',d:'Via Av. Borba Gato'}}
+  },
+  filters:[{id:'uv',label:'Passa na Univap',tags:['UV','VG,UV']},{id:'main',label:'Sem variante',tags:['']},{id:'ac',label:'Anchieta / Borba Gato',tags:['AC','VG,AC']}],
+  foot:'Os horários das partidas no bairro Urbanova são apenas para orientação. Fonte: <a href="https://www.sjc.sp.gov.br/media/kmdmy0st/128-40_site.pdf" target="_blank" rel="noopener">PDF oficial da Prefeitura de São José dos Campos</a>. Confira a tabela em feriados.',
+  itin:`<p>O mapa e a lista completa de ruas estão no PDF oficial. Pontos citados na tabela:</p>
+      <div class="pills">
+        <span>Terminal Central (PED TC-PLAT 04)</span><span>Praça Nicolau Diacov (PED O-180)</span>
+        <span>Praça Fukuoka</span><span>Praça Padre João</span><span>Praça Dr. Adelmo de Oliveira</span>
+        <span>Portaria da Univap</span><span>Praça Afonso Pena</span><span>Praça São João Bosco</span>
+        <span>Praça Cândido Dias Castejon</span>
+      </div>
+      <p>Vias principais: Av. Shishima Hifumi, Av. Lineu de Moura, Av. Eduardo Cury, Av. Papa João Paulo II, Av. São João, Av. São José, Av. Madre Thereza, Av. Dr. João Guilhermino, Av. Heitor Villa-Lobos.</p>
+      <ul>
+        <li><strong>UV</strong>: entra na Portaria da Univap.</li>
+        <li><strong>VG,AC</strong> (sentido Centro): passa pela Av. Ironman Victor Garrido e pela Av. Anchieta.</li>
+        <li><strong>VG,UV</strong> (sentido Centro): Av. Ironman Victor Garrido e Portaria da Univap.</li>
+        <li><strong>AC</strong> (sentido Bairro): via Av. Borba Gato.</li>
+        <li>O PDF traz um itinerário da variante Anchieta com Feira da Esplanada às terças.</li>
+      </ul>`,
+  data:{"util":{"C":{"5":["55 UV"],"6":["15","43"],"7":["05","48 UV","54"],"8":["06 UV","12 VG,AC","18","24","32 VG,AC","35","53 UV"],"9":["09 UV","25","55"],"10":["35 UV"],"11":["15","55 UV"],"12":["35 UV"],"13":["15 UV","55"],"14":["23 UV","40","57"],"15":["14 UV","22 VG,AC","31","48","56 VG,AC"],"16":["05","22 UV","30 VG,AC","39","56"],"17":["03 VG,AC","13 UV","30","40 VG,AC","47"],"18":["04 UV","13 VG,AC","21","39 UV"],"19":["00 UV","40 UV"],"20":["40 UV"],"21":["40 UV"],"22":["00 VG,UV","50 VG,UV"],"23":["20 VG,UV","50 UV"],"24":["10","30"],"25":["10"]},"B":{"5":["30 UV","50"],"6":["06 UV","18","30","36","42 AC","48","54 AC"],"7":["00","06 UV","18 UV","24","36 UV","42 AC","48","54"],"8":["02 AC","10","28 UV","44 UV"],"9":["00","25"],"10":["05 UV","45"],"11":["25 UV"],"12":["05 UV","45 UV"],"13":["25","53 UV"],"14":["10","27","44 UV","52 AC"],"15":["01","18","26 AC","35","52 UV"],"16":["00 AC","09","26","33 AC","43 UV"],"17":["00","10 AC","17","34 UV","43 AC","51"],"18":["09 UV","35 UV"],"19":["20 UV"],"20":["20 UV"],"21":["20 UV","40 UV"],"22":["30 UV"],"23":["00 UV","30 UV","50"],"24":["10","50"]}},"sab":{"C":{"6":["30","45"],"7":["25","45"],"8":["25"],"9":["15"],"10":["15"],"11":["05","50"],"12":["25"],"13":["05","50"],"14":["40"],"15":["30"],"16":["20"],"17":["15"],"18":["15"],"19":["15","50"],"21":["35"],"22":["45"],"24":["05"]},"B":{"6":["00","15","55"],"7":["15","55"],"8":["45"],"9":["45"],"10":["35"],"11":["20","55"],"12":["35"],"13":["20"],"14":["10"],"15":["00","50"],"16":["45"],"17":["45"],"18":["45"],"19":["20"],"21":["05"],"22":["15"],"23":["35"]}},"dom":{"C":{"6":["40"],"7":["55"],"9":["25"],"11":["15"],"12":["30"],"13":["45"],"15":["00"],"16":["15"],"17":["30"],"19":["00"],"20":["45"],"22":["00"],"24":["05"]},"B":{"6":["10"],"7":["25"],"8":["55"],"10":["45"],"12":["00"],"13":["15"],"14":["30"],"15":["45"],"17":["00"],"18":["30"],"20":["20"],"21":["35"],"23":["35"]}}}
+},
+'119':{
+  num:'119',name:'Colonial / Aquárius',sub:'Circular no Colonial · OSO 56 · tabela de 01/06/2026',
+  dirs:[{k:'A',name:'Sentido Aquárius',route:'Colonial → Aquárius',cls:'c'},{k:'C',name:'Sentido Colonial',route:'Aquárius → Colonial',cls:'b'}],
+  tags:{
+    A:{'NR':{c:'uv',d:'Via Nova República (fim de semana)'},'TC':{c:'ac',d:'Colonial / Terminal Central'}},
+    C:{'TC':{c:'ac',d:'Aquárius / Terminal Central'}}
+  },
+  filters:[{id:'nr',label:'Nova República',tags:['NR']},{id:'tc',label:'Terminal Central',tags:['TC']},{id:'main',label:'Sem variante',tags:['']}],
+  foot:'Os horários das partidas na Praça Otávio Del Nero são apenas para orientação. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 119, alterada em 01/06/2026). Confira a tabela em feriados.',
+  itin:`<p>O mapa e a lista completa de ruas estão no PDF oficial. Pontos citados na tabela:</p>
+      <div class="pills">
+        <span>Praça Otávio Del Nero (PED S-680)</span><span>Rua Juiz David Barrilli (PED O-113)</span>
+        <span>Praça Aurora Marcondes Pereira</span><span>Retorno em frente ao Condomínio Colinas</span>
+        <span>Terminal Central (PED TC-PLAT 18)</span><span>Praça Padre João</span><span>Praça Afonso Pena</span><span>Praça Cândido Dias Castejon</span>
+      </div>
+      <p>Sentido Aquárius: sai da Praça Otávio Del Nero e segue por Av. Dom Pedro I, Av. José Ribeiro Bastos, Av. João Guska, Av. Manuel Vieira, Estrada Velha Rio-São Paulo, Av. Florestan Fernandes (Anel Viário), Av. Dr. Jorge Zarur, Av. São João e Av. Major Miguel Naked, até a Rua Juiz David Barrilli.</p>
+      <p>Sentido Colonial: sai da Rua Juiz David Barrilli e volta pela Av. Dr. Jorge Zarur, Anel Viário, Estrada Velha Rio-São Paulo, Av. Manuel Vieira e Rua Carlos Nunes de Paula, até a Praça Otávio Del Nero.</p>
+      <ul>
+        <li><strong>NR</strong> (sentido Aquárius, sábado e domingo): itinerário pelo bairro Nova República.</li>
+        <li><strong>TC</strong>: segue ao Terminal Central pela Av. Heitor Villa-Lobos, Praça Cândido Dias Castejon, Av. Dr. João Guilhermino, Praça Afonso Pena e Praça Padre João.</li>
+        <li>Aos domingos há também um itinerário com desvio pela feira no Colonial (sentido Aquárius), descrito no PDF.</li>
+      </ul>`,
+  data:{"util":{"A":{"4":["50"],"5":["25","45"],"6":["00","09","18","27","36","45","55"],"7":["05","15","25","39","48","57"],"8":["16"],"9":["00","40"],"10":["25"],"11":["10","55"],"12":["40"],"13":["25"],"14":["10","40"],"15":["10","40","59"],"16":["18","37","56"],"17":["15","34","53"],"18":["12","31"],"19":["10","50"],"20":["40"],"21":["10","45"],"22":["20"],"23":["15"],"24":["00"]},"C":{"8":["05 TC","20","35","40 TC","50"],"9":["10","45"],"10":["30"],"11":["15"],"12":["00","45"],"13":["30"],"14":["00","30"],"15":["00","19","38","57"],"16":["16","35","54"],"17":["13","32","51"],"18":["10","29","48"],"19":["10","25"],"20":["00"],"21":["05","40"],"22":["10","35"],"23":["10"],"24":["05"]}},"sab":{"A":{"4":["50 NR"],"5":["30 NR"],"6":["10 NR","50 NR"],"7":["30 NR"],"8":["10 NR"],"9":["10 NR"],"10":["50 NR"],"11":["50 NR"],"13":["30 NR"],"15":["10 NR"],"16":["50 NR"],"19":["20 NR"],"20":["50 NR"],"22":["20 NR"],"23":["50 TC"]},"C":{"8":["30"],"9":["10"],"10":["10"],"11":["50"],"12":["50"],"14":["30"],"16":["10"],"17":["50"],"20":["20"],"21":["50"],"23":["20"]}},"dom":{"A":{"4":["50 NR"],"6":["05 NR"],"7":["20 NR"],"8":["55 NR"],"11":["25 NR"],"13":["05 NR"],"14":["45 NR"],"16":["25 NR"],"18":["55 NR"],"20":["35 NR"],"22":["15 NR"],"23":["50 TC"]},"C":{"8":["15"],"9":["55"],"12":["25"],"14":["05"],"15":["45"],"17":["25"],"19":["55"],"21":["35"],"23":["20"]}}}
+},
+'231':{"num":"231","name":"Vila do Tesouro / Vila Dirce","sub":"Circular na Vila Dirce · OSO 42 · tabela de 10/08/2026","dirs":[{"k":"T","name":"Sentido Vila do Tesouro","route":"Vila Dirce → Vila do Tesouro","cls":"c"},{"k":"D","name":"Sentido Vila Dirce","route":"Vila do Tesouro → Vila Dirce","cls":"b"}],"tags":{"T":{},"D":{}},"filters":[],"foot":"Os horários de partida na Vila Dirce são apenas para orientação. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 231, alterada em 10/08/2026). Confira a tabela em feriados.","itin":"<p>O mapa e a lista completa de ruas estão no PDF oficial. Pontos citados na tabela:</p><div class=\"pills\"><span>Av. Jaguari (PED N-105)</span><span>Praça Assis Chateaubriand (PED L-032)</span><span>Praça Dr. Mauricio Cury</span><span>Praça Padre João</span><span>Praça Cap. Pedro Pinto da Cunha</span></div><p>Sentido Vila do Tesouro: sai da Av. Jaguari e segue por Av. Pico das Agulhas Negras, Av. Dr. Numa de Oliveira, Av. Rui Barbosa, Ponte Minas Gerais, Viaduto dos Expedicionários, Av. São José, Av. Madre Thereza, Av. Dr. João Guilhermino, Viaduto Raquel Marcondes, Av. Pres. Juscelino Kubitschek, Av. Barbacena e Av. Martins Guimarães, até a Praça Assis Chateaubriand.</p><p>Sentido Vila Dirce: sai da Praça Assis Chateaubriand e volta por Av. Martins Guimarães, Av. Barbacena, Av. Pres. Juscelino Kubitschek, Av. Pedro Álvares Cabral, Viaduto Raquel Marcondes, Praça Padre João, Av. Tenente Névio Baracho, Av. Olivo Gomes, Av. Princesa Isabel, Ponte Minas Gerais e Av. Rui Barbosa, até a Av. Jaguari.</p>","data":{"util":{"T":{"5":["00","10","25","40","49","58"],"6":["10","25","40","55"],"7":["10","25","40","55"],"8":["10","30"],"9":["05","20","35","50"],"10":["05","25","45"],"11":["05","22","39","56"],"12":["13","30","47"],"13":["04","21","38","55"],"14":["12","29","46"],"15":["03","20","37","55"],"16":["13","31","49"],"17":["07","25","43"],"18":["01","19","37","55"],"19":["13","30","49"],"20":["07","30"],"21":["00","35"],"22":["10","35"],"23":["00"]},"D":{"5":["15","35","55"],"6":["10","25","40","55"],"7":["10","30"],"8":["05","20","35","50"],"9":["05","25","45"],"10":["05","20","35","56"],"11":["13","30","47"],"12":["04","21","38","55"],"13":["12","29","46"],"14":["03","20","37","54"],"15":["11","28","45"],"16":["02","20","38","56"],"17":["14","32","50"],"18":["08","26","45"],"19":["05","30"],"20":["05","40"],"21":["15","40"],"22":["05","45"]}},"sab":{"T":{"5":["00","40"],"6":["05","30","48"],"7":["05","33"],"8":["05","35"],"9":["10","35"],"10":["10","40"],"11":["15","43"],"12":["10","27","54"],"13":["25","56"],"14":["23","43"],"15":["07","40"],"16":["13","38"],"17":["00","50"],"18":["20"],"19":["00","55"],"20":["30"],"21":["50"],"22":["50"]},"D":{"5":["00"],"6":["00","35"],"7":["05","35"],"8":["10","35"],"9":["12","40"],"10":["15","45"],"11":["10","27","55"],"12":["25","56"],"13":["23","42"],"14":["07","40"],"15":["13","38"],"16":["00","22","50"],"17":["23"],"18":["05","55"],"19":["25"],"20":["55"],"21":["55"],"22":["25","50"]}},"dom":{"T":{"5":["00","55"],"6":["50"],"7":["50"],"8":["50"],"10":["00"],"11":["10"],"12":["20"],"13":["20"],"14":["20"],"15":["20"],"16":["20"],"17":["20"],"18":["20"],"19":["25"],"20":["35"],"21":["45"],"22":["55"]},"D":{"5":["05"],"6":["00"],"7":["00"],"8":["00"],"9":["10"],"10":["20"],"11":["30"],"12":["30"],"13":["30"],"14":["30"],"15":["30"],"16":["30"],"17":["30"],"18":["35"],"19":["45"],"20":["55"],"22":["05","50"]}}}},
+'214':{"num":"214","name":"Vila do Tesouro – Sebastião Gualberto / Av. Eng. Francisco José Longo","sub":"Circular no Centro · OSO 33 · tabela de 13/10/2026","dirs":[{"k":"C","name":"Sentido Centro","route":"Vila do Tesouro → Centro","cls":"c"},{"k":"B","name":"Sentido Bairro","route":"Centro → Vila do Tesouro","cls":"b"}],"tags":{"C":{"BV":{"c":"uv","d":"Jardim Bela Vista"},"MG":{"c":"ac","d":"Estrada Martins Guimarães"},"MG,BV":{"c":"ac","d":"Martins Guimarães e Jardim Bela Vista"},"TC":{"c":"tc","d":"Terminal Central"}},"B":{"MG":{"c":"ac","d":"Estrada Martins Guimarães"}}},"filters":[{"id":"bv","label":"Jardim Bela Vista","tags":["BV","MG,BV"]},{"id":"mg","label":"Martins Guimarães","tags":["MG","MG,BV"]},{"id":"tc","label":"Terminal Central","tags":["TC"]},{"id":"main","label":"Sem variante","tags":[""]}],"foot":"Os horários de partida na Av. Eng. Francisco José Longo são apenas para orientação. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 214, alterada em 13/10/2026). Confira a tabela em feriados.","itin":"<p>O mapa e a lista completa de ruas estão no PDF oficial. Pontos citados na tabela:</p><div class=\"pills\"><span>Praça Assis Chateaubriand (PED L-032)</span><span>Av. Eng. Francisco José Longo (PED C-011)</span><span>Terminal Central</span><span>Praça Padre João</span><span>Praça Rotary</span><span>Praça Dr. Manuel de Abreu</span></div><p>Sentido Centro: sai da Praça Assis Chateaubriand pelo Tesouro, segue por Av. Barbacena, Av. João Marson, Av. Eng. Sebastião Gualberto, Av. São José, Av. Madre Thereza, Av. Dr. Ademar de Barros e Av. Heitor Villa-Lobos, até a Av. Eng. Francisco José Longo (PED C-011). Sentido Bairro faz o caminho inverso, passando pela Av. Dr. João Guilhermino.</p><ul><li><strong>BV</strong>: passa pelo Jardim Bela Vista.</li><li><strong>MG</strong>: passa pela Estrada Martins Guimarães (nos dois sentidos).</li><li><strong>MG,BV</strong>: passa pela Estrada Martins Guimarães e pelo Jardim Bela Vista.</li><li><strong>TC</strong>: segue ao Terminal Central (sentido Centro).</li></ul>","data":{"util":{"C":{"4":["55 MG"],"5":["20 BV","40 MG"],"6":["00","14","28 BV","42","56"],"7":["10","24 MG","38 BV","52"],"8":["06","20","34","48 BV"],"9":["05 MG","35"],"10":["05 BV","35"],"11":["05 BV","32","59 BV"],"12":["26","53 MG,BV"],"13":["20","54 BV"],"14":["28 MG","45 BV"],"15":["02","19 MG","36 BV","53"],"16":["10","27","44 BV"],"17":["01 MG","18 BV","35","52"],"18":["09 MG","26 BV","50"],"19":["25 BV"],"20":["00 MG,BV","40"],"21":["20 MG,BV"],"22":["00","30 BV"],"23":["00","30 TC"],"24":["00 TC"]},"B":{"5":["30","55"],"6":["15","35 MG","58"],"7":["12","26","40 MG","54"],"8":["08","22","36","50"],"9":["18 MG","49"],"10":["15","45"],"11":["15","45"],"12":["12","39"],"13":["06","33 MG"],"14":["00","17","34","51 MG"],"15":["08","25","42","59"],"16":["16 MG","33","50"],"17":["07","24 MG","41","58"],"18":["15","32","49 MG"],"19":["04","20","55 MG"],"20":["30"],"21":["10","50 MG"],"22":["30"],"23":["00","30"]}},"sab":{"C":{"5":["25 BV","55 BV"],"6":["35"],"7":["15 BV","55"],"8":["35 BV"],"9":["15"],"10":["05 BV","55"],"11":["45 BV"],"12":["25"],"13":["05 BV","45"],"14":["25 BV"],"15":["05","45 BV"],"16":["25"],"17":["05 BV","45"],"18":["55 BV"],"20":["15"],"21":["35"],"22":["55 BV"],"24":["00 TC"]},"B":{"5":["55"],"6":["25"],"7":["05","45"],"8":["25"],"9":["05","45"],"10":["35"],"11":["25"],"12":["15","55"],"13":["35"],"14":["15","55"],"15":["35"],"16":["15","55"],"17":["35"],"18":["15"],"19":["25"],"20":["45"],"22":["05"],"23":["30"]}},"dom":{"C":{"5":["55 BV"],"7":["05"],"8":["15 BV"],"9":["35"],"11":["10 BV"],"12":["20"],"13":["30 BV"],"14":["40"],"15":["50 BV"],"17":["00"],"18":["10 BV"],"19":["30"],"21":["05 BV"],"22":["25 BV"],"23":["30 TC"]},"B":{"6":["25"],"7":["35"],"8":["45"],"10":["05"],"11":["40"],"12":["50"],"14":["00"],"15":["10"],"16":["20"],"17":["30"],"18":["40"],"20":["00"],"21":["35"],"22":["55"]}}}},
+'215':{"num":"215","name":"Vila do Tesouro / Jardim Aquárius","sub":"Circular no Jardim Aquárius · OSO 39 · tabela de 04/05/2026","dirs":[{"k":"A","name":"Sentido Jardim Aquárius","route":"Vila do Tesouro → Jardim Aquárius","cls":"c"},{"k":"T","name":"Sentido Vila do Tesouro","route":"Jardim Aquárius → Vila do Tesouro","cls":"b"}],"tags":{"A":{},"T":{}},"filters":[],"foot":"Os horários de partida no Jardim Aquárius são apenas para orientação. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 215, alterada em 04/05/2026). Confira a tabela em feriados.","itin":"<p>O PDF oficial traz apenas o mapa do itinerário principal, sem lista de ruas. Confira o mapa no PDF.</p>","data":{"util":{"A":{"5":["40"],"6":["40"],"7":["45"],"8":["50"],"9":["55"],"11":["25"],"12":["30"],"13":["35"],"14":["45"],"15":["45"],"16":["55"],"18":["05"],"19":["30"],"20":["50"],"22":["00"],"23":["20"],"25":["05"]},"T":{"4":["55"],"6":["50"],"7":["55"],"8":["55"],"10":["00"],"11":["00"],"12":["25"],"13":["45"],"14":["40"],"15":["55"],"16":["55"],"18":["15"],"19":["20"],"20":["40"],"21":["45"],"22":["55"],"24":["15"],"26":["00"]}},"sab":{"A":{"5":["30"],"7":["25"],"10":["05"],"12":["05"],"14":["05"],"16":["05"],"17":["55"],"19":["45"],"22":["15"]},"T":{"6":["30"],"8":["30"],"11":["10"],"13":["10"],"15":["05"],"17":["00"],"18":["55"],"20":["40"],"23":["10"]}},"dom":{"A":{"5":["30"],"7":["25"],"10":["05"],"12":["05"],"14":["05"],"16":["05"],"17":["55"],"19":["45"],"22":["15"]},"T":{"6":["30"],"8":["30"],"11":["10"],"13":["10"],"15":["05"],"17":["00"],"18":["55"],"20":["40"],"23":["10"]}}}},
+'230':{"num":"230","name":"Vila do Tesouro / Jardim Colonial","sub":"Circular no Colonial · O.S.O. 38 · tabela de 01/06/2025","dirs":[{"k":"J","name":"Sai do Jardim Colonial","route":"Sentido Vila do Tesouro","cls":"c"},{"k":"V","name":"Sai da Vila do Tesouro","route":"Sentido Jardim Colonial","cls":"b"}],"tags":{"J":{},"V":{"TC":{"c":"tc","d":"Terminal Central"}}},"filters":[{"id":"tc","label":"Terminal Central","tags":["TC"]},{"id":"main","label":"Sem variante","tags":[""]}],"foot":"Os horários das partidas na Praça Otávio Del Nero são apenas para orientação. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 230, alterada em 01/06/2025). Sábado e domingo usam a mesma tabela. Confira a tabela em feriados.","itin":"<p>O PDF oficial lista as ruas em texto corrido. Pontos citados:</p><div class=\"pills\"><span>Praça Assis Chateaubriand (PED L-032)</span><span>Praça Otávio Del Nero (PED S-680)</span><span>Praça Arlindo Fernandes</span><span>Praça Afonso Pena</span><span>Praça Padre João</span><span>Terminal Central (TC-PLAT 18)</span></div><p>Sentido Jardim Colonial: sai da Praça Assis Chateaubriand, passa por Estr. Mun. Martins Guimarães, Av. Barbacena, Av. Pres. Juscelino Kubitschek, Praça Afonso Pena, Av. Madre Thereza, Av. Heitor Villa-Lobos, Anel Viário, Av. Guadalupe e Estr. Velha Rio/São Paulo, até a Praça Otávio Del Nero.</p><p>Sentido Vila do Tesouro: sai da Praça Otávio Del Nero e segue pela Estr. do Imperador, Estr. Velha Rio/São Paulo, Av. Feira de Santana, Av. Guadalupe, Av. Dr. Sebastião H. da Cunha Pontes, Av. Mário Covas, Anel Viário, Av. Heitor Villa-Lobos, Praça Cândido Dias Castejon e Av. Dr. João Guilhermino, até a Praça Assis Chateaubriand.</p><ul><li><strong>TC</strong>: a partida da Vila do Tesouro segue ao Terminal Central (via Av. Pedro Álvares Cabral e Praça Padre João).</li><li>Aos domingos, o sentido Vila do Tesouro tem desvio pela feira no Colonial.</li></ul>","data":{"util":{"J":{"5":["00"],"6":["25"],"7":["40"],"9":["10"],"11":["20"],"12":["50"],"14":["30"],"16":["25"],"18":["15"],"19":["50"],"21":["50"],"23":["10"]},"V":{"5":["20"],"6":["25"],"7":["55"],"10":["00"],"11":["30"],"13":["10"],"14":["55"],"16":["45"],"18":["20"],"20":["40"],"22":["10"],"23":["15 TC"],"24":["30 TC"]}},"sab":{"J":{"5":["15"],"6":["35"],"7":["55"],"9":["30"],"11":["05"],"12":["40"],"14":["00"],"15":["20"],"16":["40"],"18":["00"],"20":["40"],"23":["10"]},"V":{"5":["20"],"6":["40"],"8":["15"],"9":["50"],"11":["25"],"12":["45"],"14":["05"],"15":["25"],"16":["45"],"19":["25"],"21":["55"],"24":["30 TC"]}},"dom":{"J":{"5":["15"],"6":["35"],"7":["55"],"9":["30"],"11":["05"],"12":["40"],"14":["00"],"15":["20"],"16":["40"],"18":["00"],"20":["40"],"23":["10"]},"V":{"5":["20"],"6":["40"],"8":["15"],"9":["50"],"11":["25"],"12":["45"],"14":["05"],"15":["25"],"16":["45"],"19":["25"],"21":["55"],"24":["30 TC"]}}}},
+'320':{"num":"320","name":"Pq. Industrial – Jd. das Indústrias / Praça Afonso Pena","sub":"Circular no bairro · O.S.O. 46 · tabela de 26/08/2024","dirs":[{"k":"P","name":"Sai da Praça Afonso Pena","route":"Sentido Bairro","cls":"c"},{"k":"B","name":"Sai do Bairro","route":"Sentido Centro","cls":"b"}],"tags":{"P":{},"B":{}},"filters":[],"foot":"Os horários das partidas na Av. Andrômeda são apenas para orientação. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 320, alterada em 26/08/2024). Confira a tabela em feriados.","itin":"<p>O mapa e a lista completa de ruas estão no PDF oficial. Pontos citados:</p><div class=\"pills\"><span>Praça Afonso Pena (PED C-020)</span><span>Av. Andrômeda (PED S-306)</span><span>Praça Arlindo Fernandes</span><span>Praça Natal</span><span>Praça Serra do Acaraí</span></div><p>Sentido Bairro: sai da Praça Afonso Pena e segue por Av. Madre Thereza, Av. São João, Av. Cassiano Ricardo, Av. Salmão, Rua Juiz David Barrilli, Marginal da Dutra, Av. Jorge Eastman, Av. Itabaiana, Av. Bacabal e Av. Dr. Sebastião Henrique Cunha Pontes, até a Av. Andrômeda.</p><p>Sentido Centro: sai da Av. Andrômeda por Av. Cassiopéia, Av. Perseu, Praça Arlindo Fernandes, Av. Guadalupe, Av. Itabaiana, Av. Jorge Eastman, Av. Cassiano Ricardo, Av. Salmão, Av. São João, Av. Nove de Julho e Av. Dr. João Guilhermino, até a Praça Afonso Pena.</p><ul><li>Às quartas-feiras, o sentido Bairro tem desvio pela feira no Parque Industrial (itinerário descrito no PDF).</li></ul>","data":{"util":{"P":{"5":["50"],"6":["08","25","42","59"],"7":["16","33","55"],"8":["22","49"],"9":["16","43"],"10":["10","37"],"11":["04","31","55"],"12":["15","35","55"],"13":["15","35","51"],"14":["07","23","39","55"],"15":["11","27","43","59"],"16":["15","31","47"],"17":["03","19","35","51"],"18":["07","23","39","55"],"19":["15"],"20":["00"],"21":["05"],"22":["00"],"23":["00"]},"B":{"5":["15","40"],"6":["00","17","34","51"],"7":["08","25","42","59"],"8":["16","33","55"],"9":["22","49"],"10":["16","43"],"11":["10","37"],"12":["04","31","55"],"13":["15","35","55"],"14":["15","35","55"],"15":["11","27","43","59"],"16":["15","31","47"],"17":["03","19","35","51"],"18":["07","23","39","55"],"19":["35"],"20":["50"],"22":["00"]}},"sab":{"P":{"6":["15","50"],"7":["25","55"],"8":["35"],"9":["25"],"10":["10","45"],"11":["25","55"],"12":["25"],"13":["00","45"],"14":["30"],"15":["15"],"16":["00","45"],"17":["35"],"18":["45"],"20":["00","45"],"21":["40"],"23":["10"]},"B":{"5":["15"],"6":["10","40"],"7":["05","45"],"8":["20","50"],"9":["30"],"10":["20"],"11":["05","40"],"12":["20","50"],"13":["20","55"],"14":["40"],"15":["25"],"16":["10","55"],"17":["40"],"18":["30"],"19":["40"],"20":["50"],"22":["20"]}},"dom":{"P":{"6":["15"],"7":["15"],"8":["35"],"9":["55"],"11":["15"],"12":["15"],"13":["15"],"14":["15"],"16":["15"],"18":["15"],"20":["45"],"23":["05"]},"B":{"5":["15"],"6":["15"],"7":["05"],"8":["05"],"9":["25"],"10":["45"],"12":["05"],"13":["05"],"15":["05"],"17":["05"],"19":["05"],"21":["35"]}}}},
+'121':{"num": "121", "name": "Urbanova – Esplanada / Terminal Central", "sub": "Circular no Urbanova · O.S.O. 69 · tabela de 18/05/2026", "dirs": [{"k": "C", "name": "Sentido Centro", "route": "Urbanova → Terminal Central", "cls": "c"}, {"k": "B", "name": "Sentido Bairro", "route": "Terminal Central → Urbanova", "cls": "b"}], "tags": {"C": {"AC": {"c": "ac", "d": "Via Av. Anchieta"}}, "B": {"AC": {"c": "ac", "d": "Via Rua Manoel Borba Gato e Av. Anchieta"}}}, "filters": [{"id": "ac", "label": "Via Anchieta", "tags": ["AC"]}, {"id": "main", "label": "Sem variante", "tags": [""]}], "foot": "Os horários das partidas no Urbanova são apenas para orientação. Nos dias úteis a linha roda de madrugada (00h, 01h, 02h e 03h, via Anchieta); sábado e domingo não. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 121, O.S.O. 69, alterada em 18/05/2026). Confira a tabela em feriados.", "itin": "<p>Pontos principais:</p><div class=\"pills\"><span>Praça Nicolau Diacov (PED O-180)</span><span>Av. Shishima Hifumi (Univap)</span><span>Praça Fukuoka</span><span>Av. Lineu de Moura</span><span>Av. Anchieta</span><span>Praça Afonso Pena</span><span>Terminal Central (TC-PLAT 02)</span></div><p>Sentido Centro: sai da Praça Nicolau Diacov pela Av. Possidônio José de Freitas, Av. Shishima Hifumi, Praça Fukuoka, Av. Lineu de Moura, Praça Mons. Josemaría Escrivá, Rua Ana Maria Nardo Silva, Av. Anchieta, Rua Domingos Jorge Velho, Av. Barão do Rio Branco, Rua Madre Paula de São José, Av. Heitor Villa-Lobos, Av. Nove de Julho, Rua Euclides Miragaia, Praça Cândido Dias Castejon, Av. Dr. João Guilhermino, Praça São João Bosco, Rua Humaitá, Praça Afonso Pena, Rua Dr. Rui Dória, Rua Flávio Berling Macedo, Av. Ten. Névio Baracho e Praça Padre João, até o Terminal Central.</p><p>Sentido Bairro: sai do Terminal Central pela Av. São José, Av. Madre Thereza, Rua Luiz Jacinto, Praça Rotary, Rua Euclides Miragaia, Praça Dr. Manuel de Abreu, Av. Dr. Ademar de Barros, Rua Eng. Prudente Meireles de Morais, Av. São João, Av. Barão do Rio Branco, Rua Domingos Jorge Velho, Rua Benedito da Silva Ramos, Av. Anchieta, Rua Henrique Mudat, Via Daniel Braun de Oliveira, Av. Lineu de Moura, Praça Fukuoka, Av. Shishima Hifumi e Av. Possidônio José de Freitas, até a Praça Nicolau Diacov.</p><ul><li><b>AC no sentido Centro:</b> segue direto pela Av. Anchieta até a Rua Euclides Miragaia, sem passar por Barão do Rio Branco, Villa-Lobos e Nove de Julho.</li><li><b>AC no sentido Bairro:</b> sai do Terminal pela Av. São José, Av. Madre Thereza e Rua Luiz Jacinto, depois Rua Manoel Borba Gato e Av. Anchieta.</li><li><b>Terças-feiras (feira no Esplanada):</b> o sentido Centro desvia pela Rua Bartolomeu de Gusmão e Rua Cel. Manoel Martins Júnior antes da Av. Anchieta.</li></ul>", "data": {"util": {"C": {"5": ["40"], "6": ["05", "25"], "7": ["24", "29", "42", "45"], "8": ["00", "18", "42"], "9": ["01", "17"], "10": ["15", "55"], "11": ["35"], "12": ["15", "55"], "13": ["35"], "14": ["15", "32", "49"], "15": ["06", "23", "40", "57"], "16": ["02 AC", "14", "20 AC", "31", "45 AC", "50 AC"], "17": ["05", "10 AC", "22", "25 AC", "39", "45 AC", "56"], "18": ["13", "20 AC", "30", "50"], "19": ["10"], "20": ["10"], "21": ["10"], "22": ["20"], "23": ["20 AC", "40 AC"], "24": ["50 AC"], "26": ["00 AC"], "27": ["40 AC"]}, "B": {"5": ["20 AC", "40"], "6": ["00", "10 AC", "12", "20", "25 AC", "40 AC", "42", "54"], "7": ["03 AC", "12", "20 AC", "30", "35 AC", "48", "51 AC"], "8": ["02", "15 AC", "20", "36", "52"], "9": ["12", "45"], "10": ["25"], "11": ["05", "45"], "12": ["25"], "13": ["05", "45"], "14": ["02", "19", "36", "53"], "15": ["10", "27", "32 AC", "44", "55 AC"], "16": ["01", "20 AC", "35", "40 AC", "52", "55 AC"], "17": ["09", "20 AC", "26", "43", "50 AC"], "18": ["00", "20", "50"], "19": ["50"], "20": ["50"], "22": ["00"], "23": ["00 AC", "20 AC"], "24": ["30 AC"], "25": ["40 AC"], "27": ["20 AC"]}}, "sab": {"C": {"5": ["50"], "7": ["05", "45"], "8": ["05"], "9": ["45"], "10": ["35"], "11": ["35"], "12": ["10", "45"], "13": ["25"], "14": ["15"], "15": ["05", "55"], "16": ["45"], "17": ["45"], "18": ["45"], "20": ["25"], "21": ["00"], "22": ["10", "35"]}, "B": {"5": ["25"], "6": ["35"], "7": ["35"], "8": ["15"], "9": ["15"], "10": ["05"], "11": ["05", "40"], "12": ["15", "55"], "13": ["45"], "14": ["35"], "15": ["25"], "16": ["15"], "17": ["15"], "18": ["15"], "19": ["55"], "20": ["30"], "21": ["40"], "22": ["05"]}}, "dom": {"C": {"5": ["50"], "7": ["15"], "8": ["30"], "10": ["20"], "11": ["50"], "13": ["05"], "14": ["20"], "15": ["35"], "16": ["50"], "18": ["05"], "19": ["55"], "21": ["20"], "22": ["45"]}, "B": {"5": ["25"], "6": ["45"], "7": ["00"], "8": ["50"], "10": ["20"], "11": ["35"], "12": ["50"], "14": ["05"], "15": ["20"], "16": ["35"], "18": ["25"], "19": ["55"], "21": ["20"]}}}},
+'309':{"num": "309", "name": "Parque Industrial / Rodoviária", "sub": "Circular no Parque Industrial · O.S.O. 38 · tabela de 21/11/2024", "dirs": [{"k": "R", "name": "Sentido Rodoviária", "route": "Parque Industrial → Rodoviária", "cls": "c"}, {"k": "P", "name": "Sentido Pq. Industrial", "route": "Rodoviária → Parque Industrial", "cls": "b"}], "tags": {"R": {}, "P": {}}, "filters": [], "foot": "Os horários das partidas na Praça Natal (Parque Industrial) são apenas para orientação. Fonte: PDF oficial da Prefeitura de São José dos Campos (linha 309, O.S.O. 38, alterada em 21/11/2024). Confira a tabela em feriados.", "itin": "<p>Pontos principais:</p><div class=\"pills\"><span>Praça Natal (PED S-339)</span><span>Anel Viário</span><span>Av. Dr. Jorge Zarur</span><span>Av. São João</span><span>Praça Afonso Pena</span><span>Rodoviária (R-PLAT 02)</span></div><p>Sentido Pq. Industrial: sai da Rodoviária pela Rua Itororó, Av. Genésia B. Tarantino, Av. Nair Toledo de Mira, Praça Cap. Pedro Pinto da Cunha, Av. Pedro Álvares Cabral, Vd. Raquel Marcondes, Rua Cel. Moraes, Rua Francisco Paes, Praça Afonso Pena, Rua Rubião Júnior, Av. Madre Thereza, Rua Luiz Jacinto, Praça Rotary, Rua Euclides Miragaia, Praça Dr. Manoel de Abreu, Av. Dr. Adhemar de Barros, Rua Ipiranga, Praça Chuí, Rua Serimbura, Av. Nove de Julho, Rua Eng. Prudente Meireles de Morais, Av. São João, Av. Maj. Miguel Naked, Av. Eduardo Cury, Av. Dr. Jorge Zarur, Anel Viário (Av. Florestan Fernandes) e Estr. Velha Rio/São Paulo, entrando no bairro pela Rua Álvaro Gonçalves Jr. até a Praça Natal.</p><p>Sentido Rodoviária: sai da Praça Natal, circula no bairro (Rua Valença, Rua Penedo, Rua Itabaiana, Rua Sena Madureira, Rua Icatu, Rua Palmares, Rua Anápolis, Rua Quixadá), segue pela Estr. Velha Rio/São Paulo, Anel Viário, Av. Dr. Jorge Zarur, Av. São João, Av. Maj. Miguel Naked, Av. Eduardo Cury, Av. Madre Paula de São José, Av. Heitor Villa-Lobos, Av. Eng. Francisco José Longo, Praça Cândido Dias Castejon, Av. Dr. João Guilhermino, Rua Dolzani Ricardo, Vd. Raquel Marcondes e Rua Itororó, até a Rodoviária.</p><ul><li><b>Quartas-feiras (feira no Parque Industrial):</b> o sentido Rodoviária desvia dentro do bairro pela Rua Óbidos, Rua Traipu e Rua Camocim.</li></ul>", "data": {"util": {"R": {"6": ["25"], "7": ["20"], "8": ["15"], "9": ["15"], "10": ["35"], "11": ["55"], "13": ["15"], "14": ["15"], "15": ["15"], "16": ["15"], "17": ["15"], "18": ["15"], "19": ["15"], "20": ["35"], "22": ["05"]}, "P": {"6": ["30"], "7": ["25"], "8": ["25"], "9": ["45"], "11": ["05"], "12": ["25"], "13": ["25"], "14": ["25"], "15": ["25"], "16": ["25"], "17": ["25"], "18": ["25"], "19": ["45"], "21": ["15"], "22": ["30"]}}, "sab": {"R": {"6": ["25"], "7": ["15"], "9": ["00"], "11": ["10"], "12": ["50"], "14": ["30"], "16": ["10"], "17": ["55"], "20": ["05"], "21": ["45"]}, "P": {"6": ["30"], "8": ["15"], "10": ["25"], "12": ["05"], "13": ["45"], "15": ["25"], "17": ["10"], "19": ["20"], "20": ["55"], "22": ["30"]}}, "dom": {"R": {"7": ["15"], "9": ["00"], "11": ["10"], "12": ["50"], "14": ["30"], "16": ["10"], "17": ["55"], "20": ["05"], "21": ["40"]}, "P": {"8": ["15"], "10": ["25"], "12": ["05"], "13": ["45"], "15": ["25"], "17": ["10"], "19": ["20"], "20": ["55"], "22": ["30"]}}}},
+'UNI':{"num":"UNI","name":"Transporte interno Univap – Campus Urbanova","sub":"Circular interno entre a Portaria 1 e a Fazendinha · horários de 09/02/2026","dirs":[{"k":"P","name":"Sai da Portaria 1","route":"Portaria 1 → Fazendinha","cls":"c"},{"k":"F","name":"Sai da Fazendinha","route":"Fazendinha → Portaria 1","cls":"b"}],"tags":{"P":{},"F":{}},"filters":[],"foot":"O PDF da Univap não informa os dias de circulação. Aqui os horários valem para dias úteis, e sábado e domingo ficam sem partidas. No recesso escolar os horários são reduzidos. Portaria Central: (12) 3947-1040. Fonte: horário de circulação do transporte interno, campus Urbanova (válido a partir de 09/02/2026).","itin":"<p>O PDF traz o mapa de paradas do campus, sem lista de ruas. Locais que aparecem no mapa:</p><div class=\"pills\"><span>Portaria 1</span><span>Bloco 1</span><span>Bloco 2</span><span>Bloco 3</span><span>Bloco 4</span><span>Bloco 5 – Biblioteca</span><span>Bloco 6</span><span>Bloco 7</span><span>Bloco 8 – Ceplade</span><span>Bloco 9</span><span>Bloco 10</span><span>PQT</span><span>IP&D I</span><span>IP&D II</span><span>CEN</span><span>Fazendinha</span></div><p>O trajeto percorre a Av. Shishima Hifumi, ligando a Portaria 1 (entrada do campus) à Fazendinha, nas duas direções.</p>","data":{"util":{"P":{"6":["45"],"7":["05","30","50"],"8":["20","50"],"9":["20","50"],"10":["20","50"],"11":["20","50"],"18":["15","35","55"],"19":["15","40"],"20":["20","40"],"21":["00","20","50"],"22":["15","35","55"],"12":["20","50"],"13":["20","50"],"14":["20","50"],"15":["20","45"],"16":["20","50"],"17":["20","50"]},"F":{"6":["55"],"7":["15","40"],"8":["05","35"],"9":["05","35"],"10":["05","35"],"11":["05","35"],"12":["05","35"],"13":["05","35"],"14":["05","35"],"15":["05","35"],"16":["05","35"],"17":["05","35"],"18":["05","25","45"],"19":["05","30"],"20":["00","30","50"],"21":["10","40"],"22":["00","25","45"],"23":["05"]}},"sab":{"P":{},"F":{}},"dom":{"P":{},"F":{}}}}
+};
+const TYPE_LABEL={util:'dias úteis',sab:'sábado',dom:'domingo'};
+const WEEKDAY=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const state={favs:new Set(),ovf:'all',view:'all',sort:'time',line:'128',day:'auto',f:'all',gdir:'C',time:''};
+const L=()=>LINES[state.line];
+try{
+  const s=JSON.parse(localStorage.getItem('linhas-sjc')||'{}');
+  if(s.view==='line')state.view='line';
+  if(Array.isArray(s.favs))for(const x of s.favs)if(typeof x==='string')state.favs.add(x);
+  if(LINES[s.line]){state.line=s.line;state.gdir=L().dirs[0].k;
+    if(L().dirs.some(d=>d.k===s.gdir))state.gdir=s.gdir;
+    if(L().filters.some(x=>x.id===s.f))state.f=s.f;}
+}catch(e){}
+state.ovf=state.favs.size?'fav':'all';
+function save(){try{localStorage.setItem('linhas-sjc',JSON.stringify({view:state.view,line:state.line,f:state.f,gdir:state.gdir,favs:[...state.favs]}));}catch(e){}}
+function test(d){
+  if(state.f==='all')return true;
+  const f=L().filters.find(x=>x.id===state.f);
+  return !!f&&f.tags.includes(d.tag);
+}
+
+const cache={};
+function deps(type,dir){
+  const k=state.line+type+dir;if(cache[k])return cache[k];
+  const o=L().data[type][dir],out=[];
+  for(const h in o)for(const s of o[h])out.push({m:(+h)*60+(+s.slice(0,2)),tag:s.slice(2).trim()});
+  out.sort((a,b)=>a.m-b.m);return cache[k]=out;
+}
+const pad=n=>String(n).padStart(2,'0');
+const fmt=m=>pad(Math.floor(m/60)%24)+':'+pad(m%60);
+function spNow(){
+  try{
+    const p={};
+    for(const x of new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date()))p[x.type]=+x.value;
+    return {h:p.hour%24,mi:p.minute,ds:Date.UTC(p.year,p.month-1,p.day)};
+  }catch(e){
+    const d=new Date(Date.now()-10800000);
+    return {h:d.getUTCHours(),mi:d.getUTCMinutes(),ds:Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())};
+  }
+}
+const typeOf=ms=>{const w=new Date(ms).getUTCDay();return w===0?'dom':w===6?'sab':'util';};
+function ctx(){
+  const n=spNow(),early=n.h<4,DAY=86400000;
+  const base=early?n.ds-DAY:n.ds,nowMin=n.h*60+n.mi+(early?1440:0);
+  let tm=null;
+  if(/^\d{1,2}:\d{2}$/.test(state.time||'')){const [h,m]=state.time.split(':').map(Number);tm=h*60+m;if(h<4)tm+=1440;}
+  const auto=state.day==='auto';
+  return {auto,early,todayMs:n.ds,base,nowMin,tm,type:auto?typeOf(base):state.day,ref:tm!==null?tm:(auto?nowMin:0),rel:auto&&tm===null};
+}
+function upcoming(dir,c,limit){
+  const out=[];
+  const days=c.auto?8:1;
+  for(let k=0;k<days&&out.length<limit;k++){
+    const type=c.auto?typeOf(c.base+k*86400000):c.type;
+    const dd=c.auto?c.base+k*86400000-c.todayMs:0;
+    const dn=Math.round(dd/86400000);
+    for(const d of deps(type,dir)){
+      const m=d.m+k*1440;
+      if(m<c.ref||!test(d))continue;
+      out.push({m,tag:d.tag,dn,dt:c.auto?c.base+k*86400000:null});
+      if(out.length>=limit)break;
+    }
+  }
+  return out;
+}
+function relText(d,c){
+  if(d.dn>=1)return d.dn===1?'amanhã':WEEKDAY[new Date(d.dt).getUTCDay()].replace('-feira','');
+  if(!c.rel)return '';
+  const x=d.m-c.ref;
+  return x<=0?'agora':'em '+dur(x);
+}
+function relHtml(d,c){
+  const t=relText(d,c);
+  return (d.dn<1&&c.rel&&d.m-c.ref<=5)?'<span class="soon">'+t+'</span>':t;
+}
+function badge(dir,tag){
+  if(!tag)return '';
+  const t=L().tags[dir][tag];
+  return '<span class="tag '+(t?t.c:'')+'">'+tag+'</span>';
+}
+function tagDesc(dir,tag){const t=L().tags[dir][tag];return t?'<span class="tagd">'+t.d+'</span>':'<span class="tagd">Itinerário principal</span>';}
+
+function renderCards(c){
+  let html='';
+  for(const D of L().dirs){
+    const dir=D.k,up=upcoming(dir,c,4);
+    html+='<section class="card '+D.cls+'"><div class="ch"><div><h2>'+D.name+'</h2><p class="route">'+D.route+'</p></div>'+star(state.line,dir)+'</div>';
+    if(!up.length){html+='<p class="empty">'+(state.f==='all'?'Sem partidas neste dia.':'Nenhuma partida com esse filtro.')+'</p></section>';continue;}
+    const a=up[0];
+    html+='<div class="next"><div class="big">'+fmt(a.m)+'</div><div class="meta"><div class="rel">'+relHtml(a,c)+'</div>'+
+      '<div>'+badge(dir,a.tag)+' '+tagDesc(dir,a.tag)+'</div></div></div>';
+    if(up.length>1){
+      html+='<ol class="more">';
+      for(const d of up.slice(1)){
+        html+='<li><span class="t">'+fmt(d.m)+'</span>'+badge(dir,d.tag)+'<span class="r">'+relHtml(d,c)+'</span></li>';
+      }
+      html+='</ol>';
+    }
+    html+='</section>';
+  }
+  $('cards').innerHTML=html;
+}
+function renderGrid(c){
+  const dir=state.gdir,list=deps(c.type,dir);
+  const pastOn=state.day==='auto'||c.tm!==null;
+  let nx=null;
+  if(pastOn){for(const d of list){if(test(d)&&d.m>=c.ref){nx=d;break;}}}
+  const byH={};
+  for(const d of list){const h=Math.floor(d.m/60);(byH[h]=byH[h]||[]).push(d);}
+  const curH=Math.floor(c.ref/60);
+  let html='';
+  for(const h in byH){
+    html+='<div class="hr'+(pastOn&&+h===curH?' now':'')+'"><div class="h">'+pad(h%24)+'</div><div class="mins">';
+    for(const d of byH[h]){
+      let cls='m';
+      if(!test(d))cls+=' off';else if(pastOn&&d.m<c.ref)cls+=' past';
+      if(d===nx)cls+=' nx';
+      html+='<span class="'+cls+'">'+pad(d.m%60)+(d.tag?badge(dir,d.tag):'')+'</span>';
+    }
+    html+='</div></div>';
+  }
+  const g=$('grid'),gk=state.line+dir+c.type+state.f+(c.tm===null?'':c.tm)+state.day,keep=(gk===window._gk)?g.scrollTop:null;
+  g.innerHTML=html;window._gk=gk;
+  if(keep!==null)g.scrollTop=keep;
+  else{const m=g.querySelector('.m.nx');g.scrollTop=m?Math.max(0,m.closest('.hr').offsetTop-4):(pastOn&&list.length?g.scrollHeight:0);}
+  $('gsub').textContent=list.length+' partidas · '+TYPE_LABEL[c.type]+(list.some(d=>d.m>=1440)?' · após a meia-noite, os horários continuam no fim da tabela (00h, 01h…)':'');
+  const leg=Object.entries(L().tags[dir]).map(([k,v])=>'<div><span class="tag '+v.c+'">'+k+'</span><span>'+v.d+'</span></div>').join('');
+  $('legend').innerHTML=Object.keys(L().tags[dir]).length?leg+'<div><span class="tagd">Sem sigla: itinerário principal.</span></div>':'<div><span class="tagd">Itinerário único, sem variantes.</span></div>';
+}
+function renderCtx(c){
+  let s;
+  if(state.day==='auto'){
+    const n=spNow(),base=c.base;
+    s='Agora '+pad(n.h)+':'+pad(n.mi)+' · '+WEEKDAY[new Date(base).getUTCDay()]+' ('+TYPE_LABEL[c.type]+')';
+    if(c.early)s+=' · madrugada do dia anterior';
+  }else s='Tabela de '+TYPE_LABEL[c.type];
+  if(c.tm!==null)s+=' · a partir das '+fmt(c.tm);
+  else if(state.day!=='auto')s+=' · a partir do primeiro horário';
+  $('ctx').textContent=s;
+}
+const $=id=>document.getElementById(id);
+function renderLine(){
+  window._gk=null;
+  const l=L(),all=state.view==='all';
+  if(all){$('lnum').textContent='SJC';$('lname').textContent='Próximos ônibus';$('lsub').textContent=Object.keys(LINES).length+' linhas · São José dos Campos';
+    $('foot').innerHTML='Horários conforme os PDFs oficiais da Prefeitura de São José dos Campos. Abra cada linha para ver a data da tabela e as observações. Confira a tabela em feriados.';}
+  else{$('lnum').textContent=l.num;$('lname').textContent=l.name;$('lsub').textContent=l.sub;$('foot').innerHTML=l.foot;}
+  $('itin').innerHTML=l.itin;
+  for(const id of ['cards','freq','gridp','itinp'])$(id).hidden=all;
+  $('overview').hidden=!all;
+  $('filters').hidden=all||!l.filters.length;
+  $('filters').innerHTML=[{id:'all',label:'Todos'}].concat(l.filters).map(f=>'<button class="chip" data-f="'+f.id+'" aria-pressed="'+(f.id===state.f)+'">'+f.label+'</button>').join('');
+  $('dirtabs').innerHTML=l.dirs.map(d=>'<button class="'+d.cls+'" data-d="'+d.k+'" aria-pressed="'+(d.k===state.gdir)+'">'+d.name+'</button>').join('');
+  const sel=$('lines').querySelector('[aria-pressed="true"]');if(sel&&sel.scrollIntoView)sel.scrollIntoView({inline:'center',block:'nearest'});
+  document.title=all?'Linhas de Ônibus SJC':l.num+' · Linhas de Ônibus SJC';
+}
+function ovRows(c){
+  const kl=state.line,kf=state.f,rows=[];
+  state.f='all';
+  try{
+    for(const k of Object.keys(LINES)){
+      state.line=k;
+      for(const D of L().dirs){
+        const a=upcoming(D.k,c,1)[0];
+        rows.push({k,D,a,tag:a&&a.tag?badge(D.k,a.tag):''});
+      }
+    }
+  }finally{state.line=kl;state.f=kf;}
+  return rows;
+}
+const destOf=D=>D.route.includes('→')?D.route.split('→')[1].trim():D.route.replace(/^Sentido /,'');
+const origOf=D=>D.route.includes('→')?D.route.split('→')[0].trim():D.name;
+const fkey=(k,d)=>k+'|'+d;
+function star(k,d){const on=state.favs.has(fkey(k,d));return '<button class="star" data-fav="'+fkey(k,d)+'" aria-pressed="'+on+'" aria-label="Favoritar">'+(on?'★':'☆')+'</button>';}
+function toggleFav(key){if(state.favs.has(key))state.favs.delete(key);else state.favs.add(key);save();render();}
+function renderOverview(c){
+  press('favseg','o',state.ovf);
+  let rows=ovRows(c);
+  const fav=r=>state.favs.has(fkey(r.k,r.D.k));
+  if(state.ovf==='fav')rows=rows.filter(fav);
+  if(state.sort==='time')rows.sort((x,y)=>(x.a?x.a.m:1e9)-(y.a?y.a.m:1e9));
+  rows.sort((x,y)=>fav(y)-fav(x));
+  if(!rows.length){$('ov').innerHTML='<p class="empty">Nenhuma favorita ainda. Toque na estrela de uma linha e sentido, em "Todas", para fixá-la aqui.</p>';return;}
+  $('ov').innerHTML=rows.map(r=>'<div class="ovw"><button class="ovr" data-l="'+r.k+'" data-d="'+r.D.k+'"><span class="n">'+r.k+'</span>'+
+    '<span class="d"><b>Para '+destOf(r.D)+'</b><span>'+r.D.name+(r.D.route.includes('→')?' · de '+origOf(r.D):'')+'</span></span>'+
+    '<span class="tr">'+(r.a?'<span class="t '+r.D.cls+'">'+fmt(r.a.m)+'</span><span class="r">'+r.tag+relHtml(r.a,c)+'</span>':'<span class="t">—</span><span class="r">sem partidas</span>')+'</span></button>'+star(r.k,r.D.k)+'</div>').join('');
+}
+const BANDS=[['Manhã',0,600],['Meio do dia',600,960],['Tarde',960,1200],['Noite',1200,1e9]];
+function dur(x){const h=Math.floor(x/60),m=x%60;return h?h+' h'+(m?' '+pad(m)+' min':''):m+' min';}
+function renderFreq(c){
+  $('fqsub').textContent=TYPE_LABEL[c.type][0].toUpperCase()+TYPE_LABEL[c.type].slice(1)+' · '+(state.f==='all'?'todas as partidas':'só as partidas do filtro')+' · partidas por hora e intervalo entre elas';
+  let html='';
+  for(const D of L().dirs){
+    const list=deps(c.type,D.k).filter(test);
+    html+='<div class="fq '+D.cls+'"><h3>'+D.name+'</h3>';
+    if(list.length<2){html+='<p class="empty">'+(list.length?'Só 1 partida.':(state.f==='all'?'Sem partidas neste dia.':'Nenhuma partida com esse filtro.'))+'</p></div>';continue;}
+    const h0=Math.floor(list[0].m/60),h1=Math.floor(list[list.length-1].m/60),cnt={};
+    let mx=1;
+    for(const d of list){const h=Math.floor(d.m/60);cnt[h]=(cnt[h]||0)+1;if(cnt[h]>mx)mx=cnt[h];}
+    const many=h1-h0+1>14;
+    html+='<div class="bars" role="img" aria-label="Partidas por hora">';
+    for(let h=h0;h<=h1;h++){
+      const n=cnt[h]||0;
+      html+='<div class="b" title="'+pad(h%24)+'h: '+n+' partida'+(n===1?'':'s')+'"><div class="col"><i style="height:'+(n?Math.round(n/mx*100):0)+'%"></i></div><span>'+(many&&h%2?'':pad(h%24))+'</span></div>';
+    }
+    html+='</div><div class="bands">';
+    for(const [name,a,b] of BANDS){
+      const it=list.filter(d=>d.m>=a&&d.m<b);
+      if(!it.length)continue;
+      const avg=it.length>1?Math.round((it[it.length-1].m-it[0].m)/(it.length-1)):0;
+      html+='<span class="k">'+name+'</span><span class="v">'+(avg?'a cada ~'+dur(avg):'1 partida')+'</span><span class="n">'+it.length+' partida'+(it.length===1?'':'s')+'</span>';
+    }
+    html+='</div>';
+    let g=0,ga=0,gb=0;
+    for(let i=1;i<list.length;i++){const x=list[i].m-list[i-1].m;if(x>g){g=x;ga=list[i-1].m;gb=list[i].m;}}
+    html+='<div class="gap">Maior intervalo: <b>'+dur(g)+'</b> ('+fmt(ga)+' → '+fmt(gb)+')</div></div>';
+  }
+  $('fqs').innerHTML=html;
+}
+function render(){
+  const c=ctx();
+  renderCtx(c);
+  if(state.view==='all')renderOverview(c);
+  else{renderCards(c);renderFreq(c);renderGrid(c);}
+}
+function press(group,attr,val){
+  for(const b of $(group).querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset[attr]===val));
+}
+const curLineKey=()=>state.view==='all'?'all':state.line;
+$('lines').innerHTML='<button class="ag" data-l="all" aria-pressed="'+(state.view==='all')+'">Agora</button>'+Object.keys(LINES).map(k=>'<button data-l="'+k+'" aria-pressed="'+(state.view==='line'&&k===state.line)+'" aria-label="Linha '+k+'">'+k+'</button>').join('');
+$('lines').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.dataset.l===curLineKey())return;
+  if(b.dataset.l==='all')state.view='all';
+  else{state.view='line';state.line=b.dataset.l;state.f='all';state.gdir=L().dirs[0].k;}
+  press('lines','l',curLineKey());save();renderLine();render();});
+$('ov').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.fav){toggleFav(b.dataset.fav);return;}
+  state.view='line';state.line=b.dataset.l;state.f='all';state.gdir=b.dataset.d;
+  press('lines','l',state.line);save();renderLine();render();window.scrollTo(0,0);});
+$('cards').addEventListener('click',e=>{const b=e.target.closest('button[data-fav]');if(b)toggleFav(b.dataset.fav);});
+$('favseg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.ovf=b.dataset.o;render();});
+$('sortseg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.sort=b.dataset.s;press('sortseg','s',state.sort);render();});
+$('days').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.day=b.dataset.day;press('days','day',state.day);render();});
+$('filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.f=b.dataset.f;press('filters','f',state.f);save();render();});
+$('dirtabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.gdir=b.dataset.d;press('dirtabs','d',state.gdir);save();render();});
+$('t').addEventListener('input',e=>{state.time=e.target.value;render();});
+$('tnow').addEventListener('click',()=>{state.time='';$('t').value='';render();});
+renderLine();render();
+setInterval(()=>{if(!document.hidden&&!state.time&&state.day==='auto')render();},20000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+</script>
+
+</body>
+</html>
