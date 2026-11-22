@@ -1,6 +1,6 @@
 // Guarda a página e os ícones para o app abrir sem internet. A página vem da rede quando houver sinal
 // (até 3,5 s); sem resposta, usa a cópia salva.
-const CACHE = 'onibus-sjc-v1';
+const CACHE = 'onibus-sjc-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './favicon.svg', './favicon.ico',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 
