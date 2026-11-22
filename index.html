@@ -351,7 +351,9 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 /* ===== Liquid Glass em toda a interface (aproximação web) =====
    Painéis de conteúdo: vidro claro e espesso (blur 24px) para manter a leitura.
    Controles: vidro mais fino. Sem suporte a blur, ou com "Reduzir transparência", tudo fica sólido. */
-.wall{position:fixed;inset:0;z-index:-1;background:var(--wall);pointer-events:none}
+.wall{position:fixed;inset:0;z-index:-1;background:var(--wall);pointer-events:none;
+  -webkit-mask-image:linear-gradient(transparent calc(env(safe-area-inset-top,0px) + 8px),#000 calc(env(safe-area-inset-top,0px) + 200px));
+  mask-image:linear-gradient(transparent calc(env(safe-area-inset-top,0px) + 8px),#000 calc(env(safe-area-inset-top,0px) + 200px))}
 .group,.card,.fq,dialog.sheet .group{position:relative;background:var(--panel-solid);box-shadow:var(--panel-shadow)}
 .notice{box-shadow:var(--panel-shadow)}
 .group::after,.card::after,.fq::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;
