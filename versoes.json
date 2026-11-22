@@ -1,0 +1,19 @@
+{
+  "descricao": "Versão (O.S.O.) da tabela da Prefeitura usada em cada linha do app. Atualize ao trocar os horários de uma linha.",
+  "fonte": "https://www.sjc.sp.gov.br/servicos/mobilidade-urbana/transporte-coletivo/",
+  "atualizado_em": "2026-11-22",
+  "linhas": {
+    "119": "119-56",
+    "121": "121-69",
+    "128": "128-40",
+    "214": "214-33",
+    "215": "215-39",
+    "230": "230-38",
+    "231": "231-42",
+    "309": "309-38",
+    "320": "320-46"
+  },
+  "fora_do_site": {
+    "UNI": "Transporte interno Univap (PDF da universidade, não aparece no site da Prefeitura)"
+  }
+}

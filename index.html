@@ -305,6 +305,11 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
   .ovw .star{width:36px}.ovw+.ovw::before,.pkr+.pkr::before{left:62px}.top .num{min-width:56px;height:46px;font-size:22px}
   .ovr .d>span .tag{display:none}
 }
+
+/* Aviso de feriado */
+.notice{margin:-8px 0 0;padding:10px 14px;border-radius:16px;background:var(--ac-t);color:var(--ac-ink);font-size:15px;line-height:1.4}
+.notice b{font-weight:600}
+.notice a{color:inherit;font-weight:600}
 </style>
 </head>
 <body>
@@ -361,6 +366,7 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
     <button class="circle" id="sortBtn" type="button" popovertarget="sortMenu" aria-label="Ordenar lista"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M120.49,167.51a12,12,0,0,1,0,17l-32,32a12,12,0,0,1-17,0l-32-32a12,12,0,1,1,17-17L68,179V48a12,12,0,0,1,24,0V179l11.51-11.52A12,12,0,0,1,120.49,167.51Zm96-96-32-32a12,12,0,0,0-17,0l-32,32a12,12,0,0,0,17,17L164,77V208a12,12,0,0,0,24,0V77l11.51,11.52a12,12,0,0,0,17-17Z"/></svg></button>
   </header>
   <p class="ctx"><span id="ctx"></span> <button class="link inl" id="ctxReset" type="button" hidden>Voltar para agora</button></p>
+  <p class="notice" id="hol" hidden></p>
   <div class="chips" id="filters" role="group" aria-label="Filtro de variante"></div>
 
   <div class="cards" id="cards"></div>
@@ -496,7 +502,39 @@ function spNow(){
     return {h:d.getUTCHours(),mi:d.getUTCMinutes(),ds:Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())};
   }
 }
-const typeOf=ms=>{const w=new Date(ms).getUTCDay();return w===0?'dom':w===6?'sab':'util';};
+// Feriados de São José dos Campos. A Prefeitura usa a tabela de domingo nos feriados e costuma usar
+// a de sábado nas emendas (sexta depois de feriado na quinta, segunda antes de feriado na terça).
+function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+  h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),x=h+l-7*m+114;
+  return Date.UTC(y,Math.floor(x/31)-1,x%31+1);}
+const FIXED_HOL={'01-01':'Confraternização Universal','03-19':'Dia de São José, padroeiro da cidade','04-21':'Tiradentes','05-01':'Dia do Trabalho',
+  '07-09':'Revolução Constitucionalista','07-27':'Aniversário de São José dos Campos','09-07':'Independência do Brasil','10-12':'Nossa Senhora Aparecida',
+  '11-02':'Finados','11-15':'Proclamação da República','11-20':'Dia da Consciência Negra','12-25':'Natal'};
+const _hol={};
+function holidays(y){
+  if(_hol[y])return _hol[y];
+  const H={},D=86400000,E=easter(y),key=ms=>new Date(ms).toISOString().slice(0,10);
+  for(const md in FIXED_HOL)H[y+'-'+md]={t:'dom',n:FIXED_HOL[md]};
+  H[key(E-47*D)]={t:'dom',n:'Carnaval'};
+  H[key(E-2*D)]={t:'dom',n:'Sexta-feira Santa'};
+  H[key(E+60*D)]={t:'dom',n:'Corpus Christi'};
+  H[key(E-48*D)]={t:'sab',n:'Segunda-feira de Carnaval',em:true};
+  H[y+'-12-31']=H[y+'-12-31']||{t:'sab',n:'Véspera de Ano-Novo',em:true};
+  for(const k of Object.keys(H)){
+    if(H[k].t!=='dom')continue;
+    const ms=Date.parse(k+'T00:00:00Z'),w=new Date(ms).getUTCDay();
+    if(w===4){const f=key(ms+D);if(!H[f])H[f]={t:'sab',n:'Emenda de '+H[k].n,em:true};}
+    if(w===2){const f=key(ms-D);if(!H[f])H[f]={t:'sab',n:'Emenda de '+H[k].n,em:true};}
+  }
+  const cz=key(E-46*D);if(!H[cz])H[cz]={t:null,n:'Quarta-feira de Cinzas',em:true};
+  return _hol[y]=H;
+}
+function holidayOf(ms){const d=new Date(ms);return holidays(d.getUTCFullYear())[d.toISOString().slice(0,10)]||null;}
+const typeOf=ms=>{
+  const w=new Date(ms).getUTCDay(),h=holidayOf(ms);
+  if(h&&h.t&&!(h.t==='sab'&&(w===0||w===6)))return h.t;
+  return w===0?'dom':w===6?'sab':'util';
+};
 function ctx(){
   const n=spNow(),early=n.h<4,DAY=86400000;
   const base=early?n.ds-DAY:n.ds,nowMin=n.h*60+n.mi+(early?1440:0);
@@ -585,16 +623,30 @@ function renderGrid(c){
   const leg=Object.entries(L().tags[dir]).map(([k,v])=>'<div><span class="tag '+v.c+'">'+k+'</span><span>'+v.d+'</span></div>').join('');
   $('legend').innerHTML=Object.keys(L().tags[dir]).length?leg+'<div><span class="tagd">Sem sigla: itinerário principal.</span></div>':'<div><span class="tagd">Itinerário único, sem variantes.</span></div>';
 }
+function renderHoliday(c){
+  const el=$('hol');
+  if(state.day!=='auto'){el.hidden=true;return;}
+  const D=86400000,today=holidayOf(c.base),tm=holidayOf(c.base+D),w=new Date(c.base).getUTCDay();
+  let t='';
+  if(today&&today.t==='dom')t='<b>Feriado: '+today.n+'.</b> Os ônibus seguem a tabela de domingo.';
+  else if(today&&today.t==='sab'&&w>0&&w<6)t='<b>'+today.n+'.</b> A Prefeitura costuma usar a tabela de sábado; algumas linhas mantêm a de dias úteis.';
+  else if(today&&!today.t)t='<b>'+today.n+'.</b> Pode haver horário especial em algumas linhas.';
+  else if(tm&&tm.t==='dom')t='<b>Amanhã é feriado ('+tm.n+').</b> Os ônibus seguem a tabela de domingo.';
+  if(t)t+=' Avisos de última hora saem no <a href="https://www.sjc.sp.gov.br/noticias/" target="_blank" rel="noopener">site da Prefeitura</a>.';
+  el.innerHTML=t;el.hidden=!t;
+}
 function renderCtx(c){
   let s;
   if(state.day==='auto'){
     const n=spNow(),base=c.base;
-    s='Agora '+pad(n.h)+':'+pad(n.mi)+' · '+WEEKDAY[new Date(base).getUTCDay()]+' ('+TYPE_LABEL[c.type]+')';
+    const hd=holidayOf(base);
+    s='Agora '+pad(n.h)+':'+pad(n.mi)+' · '+WEEKDAY[new Date(base).getUTCDay()]+' ('+(hd&&hd.t?(hd.em?'':'feriado, ')+'tabela de ':'')+TYPE_LABEL[c.type]+')';
     if(c.early)s+=' · madrugada do dia anterior';
   }else s='Tabela de '+TYPE_LABEL[c.type];
   if(c.tm!==null)s+=' · a partir das '+fmt(c.tm);
   else if(state.day!=='auto')s+=' · a partir do primeiro horário';
   $('ctx').textContent=s;
+  renderHoliday(c);
   const custom=state.day!=='auto'||!!state.time;
   $('ctxReset').hidden=!custom;$('tnow').hidden=!custom;$('whenBtn').classList.toggle('on',custom);
   $('whenBtn').setAttribute('aria-label',custom?'Dia e horário escolhidos: '+s+'. Alterar':'Escolher dia e horário');
@@ -757,6 +809,8 @@ requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.
 if('IntersectionObserver' in window)new IntersectionObserver(([e])=>$('edgetop').classList.toggle('on',!e.isIntersecting)).observe($('sentinel'));
 setInterval(()=>{if(!document.hidden&&!state.time&&state.day==='auto')render();},20000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+if('serviceWorker' in navigator&&(/\.github\.io$/.test(location.hostname)||location.hostname==='localhost'))
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 
 </body>
