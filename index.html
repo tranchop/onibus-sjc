@@ -281,8 +281,10 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 .wide{min-height:50px;border:0;border-radius:999px;background:var(--fill);color:var(--tint);font-size:17px;font-weight:600}
 .pkr{position:relative;width:100%;padding-right:16px}
 .pkr+.pkr::before{content:'';position:absolute;top:0;left:76px;right:0;border-top:.5px solid var(--sep)}
-.pkr .d b{font-size:16px;line-height:1.25}
-.pkr .t{font-size:20px}
+.pkr{padding-top:13px;padding-bottom:13px}
+.pkr .d b{font-size:17px;font-weight:500;line-height:1.3}
+.pkr .via{color:var(--muted);font-weight:400}
+.pkr .tr .ic{width:18px;height:18px;color:var(--tint)}
 .pkr[aria-current="true"] .n{background:var(--tint);color:var(--on-tint)}
 
 /* Menu de ordenação */
@@ -634,7 +636,7 @@ function ovRows(c){
 const destOf=D=>D.route.includes('→')?D.route.split('→')[1].trim():D.route.replace(/^Sentido /,'');
 const origOf=D=>D.route.includes('→')?D.route.split('→')[0].trim():D.name;
 const fkey=(k,d)=>k+'|'+d;
-const STAR_ON='<svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z"/></svg>',STAR_OFF='<svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z"/></svg>';
+const STAR_ON='<svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z"/></svg>',STAR_OFF='<svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z"/></svg>',CHECK='<svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
 function star(k,d){const on=state.favs.has(fkey(k,d));return '<button class="star" data-fav="'+fkey(k,d)+'" aria-pressed="'+on+'" aria-label="Favoritar">'+(on?STAR_ON:STAR_OFF)+'</button>';}
 function toggleFav(key){if(state.favs.has(key))state.favs.delete(key);else state.favs.add(key);save();render();}
 function renderOverview(c){
@@ -719,14 +721,19 @@ function sheet(id,open){
   if(open){if(d.open)return;if(d.showModal)d.showModal();else d.setAttribute('open','');}
   else{if(d.close)d.close();else d.removeAttribute('open');}
 }
+const ENDS_FIX={'320':['Praça Afonso Pena','Jd. das Indústrias']};
+function ends(k){
+  if(ENDS_FIX[k])return ENDS_FIX[k];
+  const D=LINES[k].dirs[0];
+  return D.route.includes('→')?D.route.split('→').map(x=>x.trim()):[D.name.replace(/^Sai d[oa] /,''),D.route.replace(/^Sentido /,'')];
+}
+const nb=t=>t.replace(/ /g,'\u00a0');
 function renderPick(){
-  const c=ctx(),best={};
-  for(const r of ovRows(c))if(r.a&&(!best[r.k]||r.a.m<best[r.k].a.m))best[r.k]=r;
   $('pickList').innerHTML=Object.keys(LINES).map(k=>{
-    const l=LINES[k],b=best[k],cur=state.view==='line'&&k===state.line;
-    return '<button class="ovr pkr" data-l="'+k+'"'+(cur?' aria-current="true"':'')+'><span class="n">'+k+'</span>'+
-      '<span class="d"><b>'+l.name+'</b><span>'+(b?'Próximo: para '+destOf(b.D):'Sem partidas')+'</span></span>'+
-      '<span class="tr">'+(b?'<span class="t '+b.D.cls+'">'+fmt(b.a.m)+'</span><span class="r">'+relText(b.a,c)+'</span>':'')+'</span></button>';
+    const e=ends(k),cur=state.view==='line'&&k===state.line;
+    return '<button class="ovr pkr" data-l="'+k+'"'+(cur?' aria-current="true"':'')+' aria-label="Linha '+k+': '+e[0]+' e '+e[1]+'">'+
+      '<span class="n">'+k+'</span><span class="d"><b>'+nb(e[0])+' <span class="via" aria-hidden="true">↔</span>\u00a0'+nb(e[1])+'</b></span>'+
+      '<span class="tr">'+(cur?CHECK:'')+'</span></button>';
   }).join('');
 }
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;
