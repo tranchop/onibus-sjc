@@ -351,9 +351,8 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 /* ===== Liquid Glass em toda a interface (aproximação web) =====
    Painéis de conteúdo: vidro claro e espesso (blur 24px) para manter a leitura.
    Controles: vidro mais fino. Sem suporte a blur, ou com "Reduzir transparência", tudo fica sólido. */
-.wall{position:fixed;inset:0;z-index:-1;background:var(--wall);pointer-events:none;
-  -webkit-mask-image:linear-gradient(transparent calc(env(safe-area-inset-top,0px) + 8px),#000 calc(env(safe-area-inset-top,0px) + 200px));
-  mask-image:linear-gradient(transparent calc(env(safe-area-inset-top,0px) + 8px),#000 calc(env(safe-area-inset-top,0px) + 200px))}
+:root{--wall-cap:linear-gradient(var(--bg) 0,var(--bg) 72px,transparent 280px)}
+.wall{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--wall-cap),var(--wall)}
 .group,.card,.fq,dialog.sheet .group{position:relative;background:var(--panel-solid);box-shadow:var(--panel-shadow)}
 .notice{box-shadow:var(--panel-shadow)}
 .group::after,.card::after,.fq::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;
@@ -374,6 +373,9 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
   .wall{display:none}
 }
 /* título compacto e desfoque progressivo no topo ao rolar (como no iOS 26) */
+.edge.top{visibility:hidden;transition:opacity .2s,visibility 0s .2s}
+.edge.top:not(.on){-webkit-backdrop-filter:none;backdrop-filter:none}
+.edge.top.on{visibility:visible;transition:opacity .2s,visibility 0s}
 .edge.top{height:calc(env(safe-area-inset-top,0px) + 50px);display:flex;align-items:flex-end;justify-content:center;padding-bottom:13px;
   background:linear-gradient(var(--bar-top) 60%,transparent);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);
   -webkit-mask-image:linear-gradient(#000 76%,transparent);mask-image:linear-gradient(#000 76%,transparent)}
