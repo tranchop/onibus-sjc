@@ -318,6 +318,17 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 .notice{margin:-8px 0 0;padding:10px 14px;border-radius:16px;background:var(--ac-t);color:var(--ac-ink);font-size:15px;line-height:1.4}
 .notice b{font-weight:600}
 .notice a{color:inherit;font-weight:600}
+
+/* Mapa da linha */
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px}
+.chips.scroll::-webkit-scrollbar{display:none}
+.chips.scroll .chip{flex:none}
+.mapfig{margin:0}
+.mapfig a{display:block}
+.mapfig img{display:block;width:100%;height:auto;background:var(--fill)}
+.mapfig figcaption{padding:10px 16px 12px;font-size:15px;color:var(--muted)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mapfig img{filter:brightness(.88)}}
+:root[data-theme="dark"] .mapfig img{filter:brightness(.88)}
 </style>
 </head>
 <body>
@@ -378,6 +389,16 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
   <div class="chips" id="filters" role="group" aria-label="Filtro de variante"></div>
 
   <div class="cards" id="cards"></div>
+
+  <section class="sec" id="mapp" hidden>
+    <h2>Mapa</h2>
+    <div class="chips scroll" id="mapchips" role="group" aria-label="Escolher mapa"></div>
+    <figure class="group mapfig">
+      <a id="maplink" target="_blank" rel="noopener"><img id="mapimg" alt="" decoding="async"></a>
+      <figcaption id="mapcap"></figcaption>
+    </figure>
+    <p class="note" id="mapnote"></p>
+  </section>
 
   <section class="sec" id="overview" hidden>
     <div class="group" id="ov"></div>
@@ -661,6 +682,26 @@ function renderCtx(c){
   $('whenBtn').setAttribute('aria-label',custom?'Dia e horário escolhidos: '+s+'. Alterar':'Escolher dia e horário');
 }
 const $=id=>document.getElementById(id);
+function mapDir(d){const D=L().dirs.find(x=>x.k===d);return D?D.name:'';}
+function setupMap(all){
+  const ms=MAPS[state.line];
+  $('mapp').hidden=all||!ms;
+  if(all||!ms)return;
+  state.mapi=Math.max(0,ms.findIndex(m=>m.d===state.gdir&&!m.t));
+  $('mapchips').innerHTML=ms.length<2?'':ms.map((m,i)=>'<button class="chip" data-i="'+i+'" aria-pressed="'+(i===state.mapi)+'">'+
+    (m.d?mapDir(m.d).replace(/^Sentido /,'').replace(/^Sai d[oa] /,''):'Campus')+(m.t?' · '+m.t.replace(',','+'):'')+'</button>').join('');
+  $('mapnote').textContent='Toque no mapa para ampliar. Imagem do PDF oficial '+(state.line==='UNI'?'da Univap.':'da Prefeitura.');
+  renderMap();
+}
+function renderMap(){
+  const ms=MAPS[state.line];if(!ms)return;
+  const m=ms[state.mapi]||ms[0],img=$('mapimg');
+  img.src=m.src;img.width=m.w;img.height=m.h;$('maplink').href=m.src;
+  const desc=m.t?((L().tags[m.d]||{})[m.t]||{}).d||m.t:'';
+  const cap=m.d?mapDir(m.d)+' · '+(desc?'variante '+m.t.replace(',','+')+': '+desc:'itinerário principal'):'Paradas do transporte interno no Campus Urbanova';
+  $('mapcap').textContent=cap;img.alt='Mapa da linha '+state.line+': '+cap;
+  for(const b of $('mapchips').querySelectorAll('button'))b.setAttribute('aria-pressed',String(+b.dataset.i===state.mapi));
+}
 function renderLine(){
   window._gk=null;
   const l=L(),all=state.view==='all';
@@ -673,6 +714,7 @@ function renderLine(){
   else{$('lnum').textContent=l.num;$('lname').textContent=l.name;$('lsub').textContent=l.sub;$('foot').innerHTML=l.foot;}
   $('itin').innerHTML=l.itin;
   for(const id of ['cards','freq','gridp','itinp'])$(id).hidden=all;
+  setupMap(all);
   $('overview').hidden=!all;
   $('filters').hidden=all||!l.filters.length;
   $('filters').innerHTML=[{id:'all',label:'Todos'}].concat(l.filters).map(f=>'<button class="chip" data-f="'+f.id+'" aria-pressed="'+(f.id===state.f)+'">'+f.label+'</button>').join('');
@@ -711,6 +753,7 @@ function renderOverview(c){
     '<span class="d"><b>Para '+destOf(r.D)+'</b><span>'+(r.a&&r.tag?r.tag+' ':'')+(r.D.route.includes('→')?'de '+origOf(r.D):r.D.name)+'</span></span>'+
     '<span class="tr">'+(r.a?'<span class="t '+r.D.cls+'">'+fmt(r.a.m)+'</span><span class="r">'+relHtml(r.a,c)+'</span>':'<span class="t none">--:--</span><span class="r">sem partidas</span>')+'</span></button>'+star(r.k,r.D.k)+'</div>').join('');
 }
+const MAPS={"128":[{"d":"C","t":"","src":"maps/128-c.webp","w":1165,"h":873},{"d":"B","t":"","src":"maps/128-b.webp","w":1168,"h":871}],"214":[{"d":"C","t":"","src":"maps/214-c.webp","w":1165,"h":779},{"d":"B","t":"","src":"maps/214-b.webp","w":1167,"h":777},{"d":"C","t":"MG","src":"maps/214-c-mg.webp","w":1162,"h":687},{"d":"B","t":"MG","src":"maps/214-b-mg.webp","w":1166,"h":683},{"d":"C","t":"BV","src":"maps/214-c-bv.webp","w":1168,"h":680},{"d":"C","t":"MG,BV","src":"maps/214-c-mgbv.webp","w":1165,"h":680},{"d":"C","t":"TC","src":"maps/214-c-tc.webp","w":1164,"h":691}],"231":[{"d":"T","t":"","src":"maps/231-t.webp","w":1167,"h":849},{"d":"D","t":"","src":"maps/231-d.webp","w":1168,"h":852}],"215":[{"d":"A","t":"","src":"maps/215-a.webp","w":1008,"h":908},{"d":"T","t":"","src":"maps/215-t.webp","w":1010,"h":910}],"119":[{"d":"A","t":"","src":"maps/119-a.webp","w":697,"h":714},{"d":"C","t":"","src":"maps/119-c.webp","w":696,"h":713},{"d":"C","t":"TC","src":"maps/119-c-tc.webp","w":900,"h":795},{"d":"A","t":"TC","src":"maps/119-a-tc.webp","w":834,"h":788},{"d":"A","t":"NR","src":"maps/119-a-nr.webp","w":768,"h":766}],"UNI":[{"d":"","t":"","src":"maps/uni.webp","w":1600,"h":900}]};
 const BANDS=[['Manhã',0,600],['Meio do dia',600,960],['Tarde',960,1200],['Noite',1200,1e9]];
 function dur(x){const h=Math.floor(x/60),m=x%60;return h?h+' h'+(m?' '+pad(m)+' min':''):m+' min';}
 function renderFreq(c){
@@ -767,6 +810,7 @@ $('ov').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)re
 $('cards').addEventListener('click',e=>{const b=e.target.closest('button[data-fav]');if(b)toggleFav(b.dataset.fav);});
 $('days').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.day=b.dataset.day;press('days','day',state.day);render();});
 $('filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.f=b.dataset.f;press('filters','f',state.f);save();render();});
+$('mapchips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.mapi=+b.dataset.i;renderMap();});
 $('dirtabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.gdir=b.dataset.d;press('dirtabs','d',state.gdir);save();render();});
 $('t').addEventListener('input',e=>{state.time=e.target.value;render();});
 function resetNow(){state.day='auto';state.time='';$('t').value='';press('days','day','auto');render();}
