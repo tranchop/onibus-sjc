@@ -351,7 +351,7 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 /* ===== Liquid Glass em toda a interface (aproximação web) =====
    Painéis de conteúdo: vidro claro e espesso (blur 24px) para manter a leitura.
    Controles: vidro mais fino. Sem suporte a blur, ou com "Reduzir transparência", tudo fica sólido. */
-:root{--wall-cap:linear-gradient(var(--bg) 0,var(--bg) 72px,transparent 280px)}
+:root{--wall-cap:linear-gradient(var(--bg) 0,var(--bg) 200px,transparent 400px)}
 .wall{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--wall-cap),var(--wall)}
 .group,.card,.fq,dialog.sheet .group{position:relative;background:var(--panel-solid);box-shadow:var(--panel-shadow)}
 .notice{box-shadow:var(--panel-shadow)}
@@ -376,9 +376,8 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 .edge.top{visibility:hidden;transition:opacity .2s,visibility 0s .2s}
 .edge.top:not(.on){-webkit-backdrop-filter:none;backdrop-filter:none}
 .edge.top.on{visibility:visible;transition:opacity .2s,visibility 0s}
-.edge.top{height:calc(env(safe-area-inset-top,0px) + 50px);display:flex;align-items:flex-end;justify-content:center;padding-bottom:13px;
-  background:linear-gradient(var(--bar-top) 60%,transparent);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);
-  -webkit-mask-image:linear-gradient(#000 76%,transparent);mask-image:linear-gradient(#000 76%,transparent)}
+.edge.top{height:env(safe-area-inset-top,0px);padding:0;background:var(--bg);-webkit-mask-image:none;mask-image:none;-webkit-backdrop-filter:none;backdrop-filter:none;opacity:1;visibility:visible;transition:none}
+#navTitle{display:none}
 #navTitle{font-size:17px;font-weight:600;transform:translateY(4px);transition:transform .25s var(--ease-out)}
 .edge.top.on #navTitle{transform:none}
 .edge.bot{height:calc(env(safe-area-inset-bottom,0px) + 90px);background:linear-gradient(to top,var(--bot-fade),transparent);
