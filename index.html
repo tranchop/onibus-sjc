@@ -6,8 +6,8 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Linhas de Ônibus SJC</title>
 <meta name="description" content="Próximos horários de ônibus em São José dos Campos, conforme os PDFs oficiais da Prefeitura.">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0d">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef1f8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#08080b">
 <meta name="color-scheme" content="light dark">
 <meta name="referrer" content="no-referrer">
 <meta name="mobile-web-app-capable" content="yes">
@@ -22,14 +22,20 @@
    segmented controls, listas agrupadas com separadores finos. Centro = azul, Bairro = vermelho (cores de sentido).
    Camadas: só a barra fixa usa z-index (20); o 1 dos segmented controls é local ao controle. */
 :root{
-  --bg:#f2f2f7; --surface:#fdfdfd; --surface2:#f2f2f7; --fg:#1c1c1e; --muted:#6c6c70;
+  --bg:#eef1f8; --panel:rgba(255,255,255,.52); --panel-solid:#fbfbfd; --panel-rim:rgba(255,255,255,.95);
+  --panel-shadow:0 10px 30px rgba(30,40,90,.10),0 1px 2px rgba(30,40,90,.06),0 0 0 .5px rgba(30,40,90,.06);
+  --chip:rgba(255,255,255,.62); --chip-ring:inset 0 0 0 .5px rgba(30,40,90,.08),inset 0 1px 0 rgba(255,255,255,.9),0 1px 4px rgba(30,40,90,.08);
+  --wall:radial-gradient(60% 45% at 8% 6%,rgba(0,122,255,.26),transparent 70%),radial-gradient(55% 40% at 96% 30%,rgba(255,59,48,.16),transparent 70%),
+    radial-gradient(60% 45% at 12% 78%,rgba(255,149,0,.16),transparent 70%),radial-gradient(55% 45% at 92% 96%,rgba(88,86,214,.16),transparent 70%);
+  --bar-top:rgba(238,241,248,.7); --bot-fade:rgba(238,241,248,.3);
+  --surface:#fdfdfd; --surface2:#f2f2f7; --fg:#1c1c1e; --muted:#56565b;
   --sep:rgba(60,60,67,.29); --fill:rgba(120,120,128,.12); --fill2:rgba(120,120,128,.2); --thumb:#fdfdfd;
   --tint:#0058d0; --on-tint:#fdfdfd;
-  --centro:#0058d0; --bairro:#d70015; --centro-ink:#004fbd; --bairro-ink:#b80012;
+  --centro:#0058d0; --bairro:#c80014; --centro-ink:#004fbd; --bairro-ink:#b80012;
   --uv-ink:#196a2d; --ac-ink:#a52a00; --star:#c93400;
   --centro-t:rgba(0,88,208,.12); --uv-t:rgba(31,122,53,.12); --ac-t:rgba(201,52,0,.12);
-  --glass:rgba(255,255,255,.3); --glass-solid:#f7f7fa; --glass-rim:rgba(255,255,255,.9); --glass-hi:rgba(255,255,255,.35); --lens:rgba(120,120,128,.14);
-  --glass-shadow:0 8px 24px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.06); --bg-fade:rgba(242,242,247,.72); --sheet:rgba(248,248,251,.86);
+  --glass:rgba(255,255,255,.24); --glass-solid:#f7f7fa; --glass-rim:rgba(255,255,255,.9); --glass-hi:rgba(255,255,255,.35); --lens:rgba(120,120,128,.14);
+  --glass-shadow:0 8px 24px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.06); --bg-fade:rgba(242,242,247,.72); --sheet:rgba(246,247,252,.72);
   --bar:rgba(242,242,247,.78); --shadow-thumb:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);
   --ease:cubic-bezier(.32,.72,0,1); --ease-out:cubic-bezier(.23,1,.32,1);
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro","Helvetica Neue",system-ui,"Segoe UI",Roboto,sans-serif;
@@ -39,27 +45,39 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0b0b0d; --surface:#1c1c1e; --surface2:#2c2c2e; --fg:#f2f2f7; --muted:#a1a1a8;
+    --bg:#08080b; --panel:rgba(44,44,52,.42); --panel-solid:#1c1c1e; --panel-rim:rgba(255,255,255,.2);
+    --panel-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 .5px rgba(255,255,255,.05);
+    --chip:rgba(255,255,255,.1); --chip-ring:inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12),0 1px 4px rgba(0,0,0,.3);
+    --wall:radial-gradient(60% 45% at 8% 6%,rgba(10,132,255,.32),transparent 70%),radial-gradient(55% 40% at 96% 30%,rgba(255,69,58,.2),transparent 70%),
+      radial-gradient(60% 45% at 12% 78%,rgba(255,159,10,.16),transparent 70%),radial-gradient(55% 45% at 92% 96%,rgba(94,92,230,.22),transparent 70%);
+    --bar-top:rgba(8,8,11,.7); --bot-fade:rgba(8,8,11,.35);
+    --surface:#1c1c1e; --surface2:#2c2c2e; --fg:#f2f2f7; --muted:#a1a1a8;
     --sep:rgba(84,84,88,.65); --fill:rgba(118,118,128,.24); --fill2:rgba(118,118,128,.34); --thumb:#636366;
     --tint:#409cff; --on-tint:#0b0b0d;
     --centro:#409cff; --bairro:#ff6961; --centro-ink:#6cb4ff; --bairro-ink:#ff8a84;
     --uv-ink:#30db5b; --ac-ink:#ffb340; --star:#ffb340;
     --centro-t:rgba(64,156,255,.2); --uv-t:rgba(48,219,91,.2); --ac-t:rgba(255,179,64,.2);
-    --glass:rgba(28,28,30,.4); --glass-solid:#2c2c2e; --glass-rim:rgba(255,255,255,.28); --glass-hi:rgba(255,255,255,.06); --lens:rgba(255,255,255,.12);
-    --glass-shadow:0 8px 24px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.3); --bg-fade:rgba(11,11,13,.72); --sheet:rgba(32,32,35,.86);
+    --glass:rgba(30,30,36,.32); --glass-solid:#2c2c2e; --glass-rim:rgba(255,255,255,.28); --glass-hi:rgba(255,255,255,.06); --lens:rgba(255,255,255,.12);
+    --glass-shadow:0 8px 24px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.3); --bg-fade:rgba(11,11,13,.72); --sheet:rgba(30,30,36,.7);
     --bar:rgba(11,11,13,.74); --shadow-thumb:0 3px 8px rgba(0,0,0,.32);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0b0b0d; --surface:#1c1c1e; --surface2:#2c2c2e; --fg:#f2f2f7; --muted:#a1a1a8;
+  --bg:#08080b; --panel:rgba(44,44,52,.42); --panel-solid:#1c1c1e; --panel-rim:rgba(255,255,255,.2);
+  --panel-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 .5px rgba(255,255,255,.05);
+  --chip:rgba(255,255,255,.1); --chip-ring:inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12),0 1px 4px rgba(0,0,0,.3);
+  --wall:radial-gradient(60% 45% at 8% 6%,rgba(10,132,255,.32),transparent 70%),radial-gradient(55% 40% at 96% 30%,rgba(255,69,58,.2),transparent 70%),
+    radial-gradient(60% 45% at 12% 78%,rgba(255,159,10,.16),transparent 70%),radial-gradient(55% 45% at 92% 96%,rgba(94,92,230,.22),transparent 70%);
+  --bar-top:rgba(8,8,11,.7); --bot-fade:rgba(8,8,11,.35);
+  --surface:#1c1c1e; --surface2:#2c2c2e; --fg:#f2f2f7; --muted:#a1a1a8;
   --sep:rgba(84,84,88,.65); --fill:rgba(118,118,128,.24); --fill2:rgba(118,118,128,.34); --thumb:#636366;
   --tint:#409cff; --on-tint:#0b0b0d;
   --centro:#409cff; --bairro:#ff6961; --centro-ink:#6cb4ff; --bairro-ink:#ff8a84;
   --uv-ink:#30db5b; --ac-ink:#ffb340; --star:#ffb340;
   --centro-t:rgba(64,156,255,.2); --uv-t:rgba(48,219,91,.2); --ac-t:rgba(255,179,64,.2);
-  --glass:rgba(28,28,30,.4); --glass-solid:#2c2c2e; --glass-rim:rgba(255,255,255,.28); --glass-hi:rgba(255,255,255,.06); --lens:rgba(255,255,255,.12);
-    --glass-shadow:0 8px 24px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.3); --bg-fade:rgba(11,11,13,.72); --sheet:rgba(32,32,35,.86);
+  --glass:rgba(30,30,36,.32); --glass-solid:#2c2c2e; --glass-rim:rgba(255,255,255,.28); --glass-hi:rgba(255,255,255,.06); --lens:rgba(255,255,255,.12);
+    --glass-shadow:0 8px 24px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.3); --bg-fade:rgba(11,11,13,.72); --sheet:rgba(30,30,36,.7);
     --bar:rgba(11,11,13,.74); --shadow-thumb:0 3px 8px rgba(0,0,0,.32);
   color-scheme:dark;
 }
@@ -284,7 +302,7 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 .sh-h h2{margin:0;font-family:var(--font-display);font-size:20px;font-weight:700}
 .sh-b{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px;padding:2px 12px 16px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 .sh-b>*{flex:none}
-.sh-b .group{background:var(--surface)}
+
 .done{font-weight:600}
 .wide{min-height:50px;border:0;border-radius:999px;background:var(--fill);color:var(--tint);font-size:17px;font-weight:600}
 .pkr{position:relative;width:100%;padding-right:16px}
@@ -329,11 +347,48 @@ dialog.sheet[open]::backdrop{background:rgba(0,0,0,.28)}
 .mapfig figcaption{padding:10px 16px 12px;font-size:15px;color:var(--muted)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mapfig img{filter:brightness(.88)}}
 :root[data-theme="dark"] .mapfig img{filter:brightness(.88)}
+
+/* ===== Liquid Glass em toda a interface (aproximação web) =====
+   Painéis de conteúdo: vidro claro e espesso (blur 24px) para manter a leitura.
+   Controles: vidro mais fino. Sem suporte a blur, ou com "Reduzir transparência", tudo fica sólido. */
+.wall{position:fixed;inset:0;z-index:-1;background:var(--wall);pointer-events:none}
+.group,.card,.fq,dialog.sheet .group{position:relative;background:var(--panel-solid);box-shadow:var(--panel-shadow)}
+.notice{box-shadow:var(--panel-shadow)}
+.group::after,.card::after,.fq::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;
+  background:linear-gradient(150deg,var(--panel-rim),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,var(--panel-rim));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.chip,.wide{background:var(--panel-solid);box-shadow:var(--chip-ring)}
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .group,.card,.fq,dialog.sheet .group{background:var(--panel);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%)}
+  .chip,.wide{background:var(--chip);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%)}
+  .notice{-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
+}
+.chip[aria-pressed="true"]{background:var(--tint);color:var(--on-tint);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 8px rgba(0,88,208,.28)}
+.sgc{background:rgba(120,120,128,.14)}
+.top .num{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 12px rgba(0,88,208,.25)}
+@media (prefers-reduced-transparency:reduce){
+  .group,.card,.fq,.chip,.wide,dialog.sheet .group{background:var(--panel-solid);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .wall{display:none}
+}
+/* título compacto e desfoque progressivo no topo ao rolar (como no iOS 26) */
+.edge.top{height:calc(env(safe-area-inset-top,0px) + 50px);display:flex;align-items:flex-end;justify-content:center;padding-bottom:13px;
+  background:linear-gradient(var(--bar-top) 60%,transparent);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);
+  -webkit-mask-image:linear-gradient(#000 76%,transparent);mask-image:linear-gradient(#000 76%,transparent)}
+#navTitle{font-size:17px;font-weight:600;transform:translateY(4px);transition:transform .25s var(--ease-out)}
+.edge.top.on #navTitle{transform:none}
+.edge.bot{height:calc(env(safe-area-inset-bottom,0px) + 90px);background:linear-gradient(to top,var(--bot-fade),transparent);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);-webkit-mask-image:linear-gradient(to top,#000 35%,transparent);mask-image:linear-gradient(to top,#000 35%,transparent)}
+/* números proporcionais nos horários, como nos apps da Apple; largura fixa só na grade */
+.big,.ovr .t,.more li{font-variant-numeric:normal}
+.more .t{font-size:17px;font-weight:600;min-width:56px}
+@media (prefers-reduced-motion:reduce){#navTitle{transition:none;transform:none}}
 </style>
 </head>
 <body>
+<div class="wall" aria-hidden="true"></div>
 <div class="sentinel" id="sentinel"></div>
-<div class="edge top" id="edgetop" aria-hidden="true"></div>
+<div class="edge top" id="edgetop" aria-hidden="true"><span id="navTitle"></span></div>
 <div class="edge bot" aria-hidden="true"></div>
 <nav class="dock" aria-label="Navegação">
   <div class="tabs glass" id="tabs">
@@ -670,7 +725,8 @@ function renderCtx(c){
     const n=spNow(),base=c.base;
     const hd=holidayOf(base);
     const wd=WEEKDAY[new Date(base).getUTCDay()];
-    s=wd[0].toUpperCase()+wd.slice(1)+', '+pad(n.h)+':'+pad(n.mi)+' · '+(hd&&hd.t?(hd.em?'':'feriado, ')+'tabela de ':'')+TYPE_LABEL[c.type];
+    const w=new Date(base).getUTCDay(),same=!(hd&&hd.t)&&((w===0&&c.type==='dom')||(w===6&&c.type==='sab'));
+    s=wd[0].toUpperCase()+wd.slice(1)+', '+pad(n.h)+':'+pad(n.mi)+(same?'':' · '+(hd&&hd.t?(hd.em?'':'feriado, ')+'tabela de ':'')+TYPE_LABEL[c.type]);
     if(c.early)s+=' · madrugada';
   }else s='Tabela de '+TYPE_LABEL[c.type];
   if(c.tm!==null)s+=' · a partir das '+fmt(c.tm);
@@ -720,6 +776,7 @@ function renderLine(){
   $('filters').innerHTML=[{id:'all',label:'Todos'}].concat(l.filters).map(f=>'<button class="chip" data-f="'+f.id+'" aria-pressed="'+(f.id===state.f)+'">'+f.label+'</button>').join('');
   $('dirtabs').innerHTML=l.dirs.map(d=>'<button class="'+d.cls+'" data-d="'+d.k+'" aria-pressed="'+(d.k===state.gdir)+'">'+d.name.replace(/^Sentido /,'')+'</button>').join('');
   syncTabs();
+  $('navTitle').textContent=all?(state.ovf==='fav'?'Favoritas':'Agora'):'Linha '+l.num;
   document.title=all?'Linhas de Ônibus SJC':l.num+' · Linhas de Ônibus SJC';
 }
 function ovRows(c){
@@ -859,7 +916,7 @@ if(typeof SM.showPopover==='function'){
 }else{SM.hidden=true;$('sortBtn').addEventListener('click',()=>{state.sort=state.sort==='time'?'line':'time';syncSort();render();});}
 renderLine();render();
 requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.sgc').forEach(e=>e.classList.add('ready'))));
-if('IntersectionObserver' in window)new IntersectionObserver(([e])=>$('edgetop').classList.toggle('on',!e.isIntersecting)).observe($('sentinel'));
+if('IntersectionObserver' in window)new IntersectionObserver(([e])=>$('edgetop').classList.toggle('on',!e.isIntersecting&&e.boundingClientRect.top<0),{rootMargin:'-56px 0px 0px 0px'}).observe($('lname'));
 setInterval(()=>{if(!document.hidden&&!state.time&&state.day==='auto')render();},20000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
 if('serviceWorker' in navigator&&(/\.github\.io$/.test(location.hostname)||location.hostname==='localhost'))
